@@ -12,4 +12,5 @@ public function katalog()
 {
     return $this->belongsTo(\App\Models\Katalog::class);
 }
+
 }

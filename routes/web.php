@@ -23,5 +23,6 @@ Route::resource('katalog', KatalogController::class);
 Route::resource('pks', PksController::class);
 Route::resource('katalog', \App\Http\Controllers\KatalogController::class);
 Route::resource('tarif', \App\Http\Controllers\TarifController::class);
-
+Route::get('/pks/{id}/cetak', [PksController::class, 'cetak'])->name('pks.cetak');
+Route::get('/pks', [PksController::class, 'index'])->name('pks.index');
 require __DIR__.'/auth.php';

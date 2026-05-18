@@ -17,6 +17,8 @@ return new class extends Migration
     $table->foreignId('katalog_id')->constrained('katalogs');
     $table->string('waktu'); // regular / prime
     $table->string('channel'); // pro1 / pro2
+    $table->date('tanggal_mulai')->nullable();
+    $table->date('tanggal_selesai')->nullable();
     $table->integer('qty');
     $table->decimal('tarif', 15, 2);
     $table->decimal('subtotal', 15, 2);

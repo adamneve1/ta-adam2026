@@ -2,39 +2,56 @@
 
 @section('content')
 
-<h3>Katalog</h3>
+<div class="container-fluid mt-4">
+    <div class="row mb-4">
+        <div class="col">
+            <h2 class="mb-0">Produk</h2>
+        </div>
+        <div class="col-auto">
+            <a href="{{ route('katalog.create') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle"></i> Tambah Produk
+            </a>
+        </div>
+    </div>
 
-<a href="{{ route('katalog.create') }}" class="btn btn-primary mb-3">
-    Tambah Produk
-</a>
-
-@if(session('success'))
-    <div class="alert alert-success">{{ session('success') }}</div>
-@endif
-
-<table class="table table-bordered">
-    <thead>
-        <tr>
-            <th>Nama Layanan</th>
-            <th>Aksi</th>
-        </tr>
-    </thead>
-    <tbody>
-        @foreach($katalogs as $k)
-        <tr>
-            <td>{{ $k->nama_layanan }}</td>
-            <td>
-                <a href="{{ route('katalog.edit', $k->id) }}" class="btn btn-warning btn-sm">Edit</a>
-
-                <form action="{{ route('katalog.destroy', $k->id) }}" method="POST" style="display:inline;">
-                    @csrf
-                    @method('DELETE')
-                    <button class="btn btn-danger btn-sm">Hapus</button>
-                </form>
-            </td>
-        </tr>
-        @endforeach
-    </tbody>
-</table>
+    <div class="card">
+        <div class="card-body">
+            <table class="table table-hover">
+                <thead class="table-light">
+                    <tr>
+                        <th>Nama Layanan</th>
+                        <th>Regular</th>
+                        <th>Prime</th>
+                        <th class="text-center">Aksi</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($katalogs as $k)
+                        <tr>
+                            <td>{{ $k->nama_layanan }}</td>
+                            <td>
+                                {{ optional($k->tarifs->where('waktu','regular')->first())->tarif }}
+                            </td>
+                            <td>
+                                {{ optional($k->tarifs->where('waktu','prime')->first())->tarif }}
+                            </td>
+                            <td class="text-center">
+                                <a href="{{ route('katalog.edit',$k->id) }}" class="btn btn-warning btn-sm">
+                                    Edit
+                                </a>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="4" class="text-center text-muted py-4">
+                                Tidak ada produk
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
 
 @endsection

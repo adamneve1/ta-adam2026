@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Katalog;
 use Illuminate\Http\Request;
+use App\Models\Tarif;
 
 class KatalogController extends Controller
 {
@@ -14,43 +15,79 @@ class KatalogController extends Controller
     }
 
     public function create()
-    {
-        return view('katalog.create');
-    }
+{
+    $katalogs = Katalog::all();
+    $tarifs = Tarif::all();
 
+    return view('katalog.create', compact('katalogs','tarifs'));
+}
     public function store(Request $request)
-    {
-        $request->validate([
-            'nama_layanan' => 'required|string|max:255',
-            'deskripsi' => 'nullable|string'
-        ]);
+{
+    $request->validate([
+        'nama_layanan' => 'required',
+        'tarif_regular' => 'required|numeric|min:0',
+        'tarif_prime' => 'required|numeric|min:0',
+    ]);
 
-        Katalog::create($request->only('nama_layanan','deskripsi'));
+    $katalog = Katalog::create([
+        'nama_layanan' => $request->nama_layanan,
+        'deskripsi' => $request->deskripsi,
+    ]);
 
-        return redirect()->route('katalog.index')
-            ->with('success', 'Katalog berhasil ditambahkan');
-    }
+    Tarif::create([
+        'katalog_id' => $katalog->id,
+        'waktu' => 'regular',
+        'tarif' => $request->tarif_regular,
+    ]);
 
-    public function edit($id)
-    {
-        $katalog = Katalog::findOrFail($id);
-        return view('katalog.edit', compact('katalog'));
-    }
+    Tarif::create([
+        'katalog_id' => $katalog->id,
+        'waktu' => 'prime',
+        'tarif' => $request->tarif_prime,
+    ]);
+
+    return redirect()->route('katalog.index');
+}
+
+   public function edit($id)
+{
+    $katalog = Katalog::with('tarifs')->findOrFail($id);
+
+    $tarifRegular = $katalog->tarifs->where('waktu','regular')->first();
+    $tarifPrime = $katalog->tarifs->where('waktu','prime')->first();
+
+    return view('katalog.edit', compact('katalog','tarifRegular','tarifPrime'));
+}
 
     public function update(Request $request, $id)
-    {
-        $katalog = Katalog::findOrFail($id);
+{
+    $request->validate([
+        'nama_layanan' => 'required',
+        'tarif_regular' => 'required|numeric|min:0',
+        'tarif_prime' => 'required|numeric|min:0',
+    ]);
 
-        $request->validate([
-            'nama_layanan' => 'required|string|max:255',
-            'deskripsi' => 'nullable|string'
-        ]);
+    $katalog = Katalog::findOrFail($id);
 
-        $katalog->update($request->only('nama_layanan','deskripsi'));
+    // update katalog
+    $katalog->update([
+        'nama_layanan' => $request->nama_layanan,
+        'deskripsi' => $request->deskripsi,
+    ]);
 
-        return redirect()->route('katalog.index')
-            ->with('success', 'Katalog berhasil diupdate');
-    }
+   
+    Tarif::updateOrCreate(
+        ['katalog_id' => $katalog->id, 'waktu' => 'regular'],
+        ['tarif' => $request->tarif_regular]
+    );
+
+    Tarif::updateOrCreate(
+        ['katalog_id' => $katalog->id, 'waktu' => 'prime'],
+        ['tarif' => $request->tarif_prime]
+    );
+
+    return redirect()->route('katalog.index')->with('success','Produk diupdate');
+}
 
     public function destroy($id)
     {

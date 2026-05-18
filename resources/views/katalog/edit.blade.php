@@ -18,6 +18,24 @@
     <textarea name="deskripsi" class="form-control">{{ $katalog->deskripsi }}</textarea>
 </div>
 
+<hr>
+
+<h5>Harga</h5>
+
+<div class="mb-3">
+    <label>Harga Regular</label>
+    <input type="number" name="tarif_regular" 
+        value="{{ $tarifRegular->tarif ?? 0 }}" 
+        class="form-control">
+</div>
+
+<div class="mb-3">
+    <label>Harga Prime</label>
+    <input type="number" name="tarif_prime" 
+        value="{{ $tarifPrime->tarif ?? 0 }}" 
+        class="form-control">
+</div>
+
 <button class="btn btn-success">Update</button>
 
 </form>
