@@ -8,14 +8,30 @@ use App\Models\Pks;
 use App\Models\PksItem;
 use App\Models\Client;
 use App\Models\Tarif;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class PksController extends Controller
 {
 
 
-public function index()
+public function index(Request $request)
 {
-    $pks = Pks::with('client')->latest()->get();
+    $pks = Pks::with('client')
+        ->when($request->filled('keyword'), function ($query) use ($request) {
+            $keyword = $request->keyword;
+            $query->where(function ($q) use ($keyword) {
+                $q->where('nomor', 'like', '%' . $keyword . '%')
+                    ->orWhere('judul', 'like', '%' . $keyword . '%')
+                    ->orWhereHas('client', function ($clientQuery) use ($keyword) {
+                        $clientQuery->where('nama', 'like', '%' . $keyword . '%');
+                    });
+            });
+        })
+        ->when($request->filled('tanggal'), function ($query) use ($request) {
+            $query->whereDate('tanggal', $request->tanggal);
+        })
+        ->latest()
+        ->get();
 
     return view('pks.index', compact('pks'));
 }
@@ -133,12 +149,61 @@ $number = str_pad($urut, 4, '0', STR_PAD_LEFT)
     
     $pks->update(['total' => $total]);
 
-    return redirect()->back()->with('success', 'PKS berhasil dibuat');
+    return redirect()->route('pks.cetak', $pks->id)->with('success', 'PKS berhasil dibuat');
 }
-public function cetak($id)
+public function cetak($id, Request $request)
 {
-    $pks = Pks::with(['client','items.katalog'])->findOrFail($id);
+    if ($id === 'preview') {
+        $payloadRaw = $request->query('payload');
+        $payload = $payloadRaw ? json_decode($payloadRaw, true) : [];
 
-    return view('pks.cetak', compact('pks'));
+        $form = $payload['form'] ?? [];
+        $items = $payload['items'] ?? [];
+        $client = $payload['client'] ?? [];
+
+        $mappedItems = collect($items)->map(function ($item) {
+            return (object) [
+                'katalog_id' => $item['katalog_id'] ?? null,
+                'waktu' => $item['waktu'] ?? null,
+                'channel' => $item['channel'] ?? null,
+                'tanggal_mulai' => $item['tanggal_mulai'] ?? null,
+                'tanggal_selesai' => $item['tanggal_selesai'] ?? null,
+                'qty' => (int) ($item['qty'] ?? 0),
+                'tarif' => (int) ($item['tarif'] ?? 0),
+                'subtotal' => (int) ($item['subtotal'] ?? 0),
+                'katalog' => null,
+            ];
+        });
+
+        $pks = (object) [
+            'tanggal' => $form['tanggal'] ?? now()->toDateString(),
+            'judul' => $form['judul'] ?? '',
+            'nomor' => 'DRAFT',
+            'nomor_referensi' => $form['nomor_referensi'] ?? '',
+            'total' => $mappedItems->sum('subtotal'),
+            'client' => (object) [
+                'nama' => $client['nama'] ?? '',
+                'jabatan' => $client['jabatan'] ?? '',
+                'alamat' => $client['alamat'] ?? '',
+            ],
+            'items' => $mappedItems,
+        ];
+
+        return Pdf::loadView('pks.cetak', compact('pks'))
+            ->setPaper('a4', 'portrait')
+            ->setOption([
+                'defaultMediaType' => 'print',
+            ])
+            ->stream('pks-preview.pdf');
+    }
+
+    $pks = Pks::with(['client', 'items.katalog'])->findOrFail($id);
+
+    return Pdf::loadView('pks.cetak', compact('pks'))
+        ->setPaper('a4', 'portrait')
+        ->setOption([
+            'defaultMediaType' => 'print',
+        ])
+        ->stream('pks-'.$pks->id.'.pdf');
 }
 }

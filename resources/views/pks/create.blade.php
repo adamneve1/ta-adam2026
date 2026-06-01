@@ -73,6 +73,11 @@ document.addEventListener('alpine:init', () => {
         
         // Data dari Laravel DB
         clients: @json($clients),
+        katalogMap: {
+            @foreach($katalogs as $k)
+                "{{ $k->id }}": @json($k->nama_layanan),
+            @endforeach
+        },
         tarifMap: {
             @foreach($tarifs as $t)
                 "{{ $t->katalog_id }}_{{ $t->waktu }}": {{ $t->tarif }},
@@ -126,6 +131,8 @@ document.addEventListener('alpine:init', () => {
                 katalog_id: '',
                 waktu: 'regular',
                 channel: 'pro1',
+                tanggal_mulai: '',
+                tanggal_selesai: '',
                 qty: 1,
                 tarif: 0,
                 subtotal: 0
@@ -166,6 +173,18 @@ document.addEventListener('alpine:init', () => {
                 return c ? c.nama : '-';
             }
             return this.form.client.nama ? `Client Baru (${this.form.client.nama})` : '-';
+        },
+
+        getClientField(field) {
+            if (this.form.client_id) {
+                const c = this.clients.find(c => c.id == this.form.client_id);
+                return c && c[field] ? c[field] : '-';
+            }
+            return this.form.client[field] ? this.form.client[field] : '-';
+        },
+
+        getLayananName(katalogId) {
+            return this.katalogMap[katalogId] || '-';
         },
 
         isEmpty(value) {
@@ -238,7 +257,7 @@ document.addEventListener('alpine:init', () => {
             if (this.step < this.totalSteps) this.step++;
         }
     }));
-});=
+});
 </script>
 
 @endsection

@@ -77,10 +77,32 @@
             </li>
 
             <li class="nav-item">
-                <a href="#" class="nav-link rounded mb-1 text-white-50">
-                    <i class="bi bi-receipt me-2"></i>
+               <a class="nav-link rounded mb-1 {{ request()->is('invoice*') ? 'active text-primary bg-white' : 'text-white-50' }}"
+                   data-bs-toggle="collapse"
+                   href="#{{ $menuId ?? 'sidebarMenu' }}Invoice"
+                   role="button">
+                    <i class="bi bi-file-earmark-text me-2"></i>
                     Invoice
                 </a>
+
+                <div class="collapse {{ request()->is('invoice*') ? 'show' : '' }}"
+                     id="{{ $menuId ?? 'sidebarMenu' }}Invoice"
+                     data-bs-parent="#{{ $menuId ?? 'sidebarMenu' }}">
+                    <ul class="nav flex-column ms-3 ps-2 border-start border-light border-opacity-25 mb-2">
+                        <li class="nav-item">
+                            <a href="/invoice/create"
+                               class="nav-link small rounded mb-1 {{ request()->is('invoice/create') ? 'active text-primary bg-white' : 'text-white-50' }}">
+                                Buat Invoice
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a href="/invoice"
+                               class="nav-link small rounded mb-1 {{ request()->is('invoice') ? 'active text-primary bg-white' : 'text-white-50' }}">
+                                List Invoice
+                            </a>
+                        </li>
+                    </ul>
+                </div>
             </li>
 
             <li class="nav-item">

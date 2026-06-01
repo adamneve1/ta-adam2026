@@ -3,6 +3,7 @@
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\PksController;
+use App\Http\Controllers\InvoiceController;
 
 Route::get('/', function () {
     return view('welcome');
@@ -25,4 +26,10 @@ Route::resource('katalog', \App\Http\Controllers\KatalogController::class);
 Route::resource('tarif', \App\Http\Controllers\TarifController::class);
 Route::get('/pks/{id}/cetak', [PksController::class, 'cetak'])->name('pks.cetak');
 Route::get('/pks', [PksController::class, 'index'])->name('pks.index');
+
+Route::resource('invoice', InvoiceController::class);
+Route::patch('/invoice/{id}/billing', [InvoiceController::class, 'updateBilling'])->name('invoice.updateBilling');
+Route::get('/invoice/{id}/cetak', [InvoiceController::class, 'cetak'])->name('invoice.cetak');
+
 require __DIR__.'/auth.php';
+

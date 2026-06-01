@@ -12,7 +12,8 @@
     </div>
 
     <div class="border p-3 rounded mb-4 bg-white" :class="{ 'opacity-50 pointer-events-none': form.client_id }">
-        <h6 class="mb-3">Input Client Baru</h6>
+        <h6 class="mb-1">Atau Input Client Baru</h6>
+        <p class="text-muted small mb-3">Client baru akan otomatis disimpan dan dapat digunakan kembali untuk PKS berikutnya.</p>
 
         <div class="row mb-3">
             <div class="col-md-6">
