@@ -7,9 +7,11 @@
             <h3 class="mb-1 text-gray-800">Daftar Invoice (Tagihan)</h3>
             <p class="text-muted mb-0">Manajemen penagihan invoice PNBP dari PKS yang disepakati.</p>
         </div>
-        <a href="{{ route('invoice.create') }}" class="btn btn-primary">
-            <i class="bi bi-plus-circle me-1"></i> Buat Invoice Tagihan
-        </a>
+        @if(auth()->user()->isPenyetor())
+            <a href="{{ route('invoice.create') }}" class="btn btn-primary">
+                <i class="bi bi-plus-circle me-1"></i> Buat Invoice Tagihan
+            </a>
+        @endif
     </div>
 
     @if(session('success'))
@@ -18,6 +20,47 @@
             <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
         </div>
     @endif
+
+    <div class="mb-4">
+    <form method="GET" action="{{ route('invoice.index') }}">
+        <div class="row g-2">
+
+            <div class="col">
+                <input
+                    type="text"
+                    name="keyword"
+                    class="form-control form-control-sm"
+                    value="{{ request('keyword') }}"
+                    placeholder="Cari nomor, referensi, judul, client..."
+                >
+            </div>
+
+            <div class="col-auto">
+                <input
+                    type="date"
+                    name="tanggal"
+                    class="form-control form-control-sm"
+                    value="{{ request('tanggal') }}"
+                >
+            </div>
+
+            <div class="col-auto">
+                <button type="submit" class="btn btn-primary btn-sm">
+                    Filter
+                </button>
+            </div>
+
+            @if(request()->filled('keyword') || request()->filled('tanggal'))
+                <div class="col-auto">
+                    <a href="{{ route('invoice.index') }}" class="btn btn-outline-secondary btn-sm">
+                        Reset
+                    </a>
+                </div>
+            @endif
+
+        </div>
+    </form>
+</div>
 
     <div class="card shadow-sm">
         <div class="card-body p-0">
@@ -80,13 +123,13 @@
                                             </li>
                                             
                                             <!-- Edit (Hanya jika belum lunas) -->
-                                            @if($inv->status !== 'paid')
+                                            @if(auth()->user()->isPenyetor() && $inv->status !== 'paid')
                                                 <li>
                                                     <a class="dropdown-item py-2" href="{{ route('invoice.edit', $inv->id) }}">
                                                         <i class="bi bi-pencil-fill text-warning me-2"></i> Edit Invoice
                                                     </a>
                                                 </li>
-                                            @else
+                                            @elseif(auth()->user()->isPenyetor())
                                                 <li>
                                                     <button class="dropdown-item py-2 text-muted" disabled title="Lunas - Tidak Bisa Diedit">
                                                         <i class="bi bi-lock-fill text-muted me-2"></i> <del>Edit (Lunas)</del>
@@ -109,10 +152,10 @@
                         @empty
                             <tr>
                                 <td colspan="10" class="text-center py-5 text-muted">
-                                    <i class="bi bi-receipt fs-1 d-block mb-3 opacity-50"></i>
-                                    Belum ada invoice yang dibuat.
+                                 <i class="bi bi-receipt fs-1 d-block mb-3 opacity-50"></i>
+                                    {{ request()->filled('keyword') || request()->filled('tanggal') ? 'Tidak ada invoice yang cocok dengan filter saat ini.' : 'Belum ada invoice yang dibuat.' }}
                                 </td>
-                            </tr>
+                            </tr>   
                         @endforelse
                     </tbody>
                 </table>

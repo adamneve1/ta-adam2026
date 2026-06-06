@@ -1,13 +1,20 @@
 @extends('layouts.app')
 
 @section('content')
+@php
+    $totalDibayar = (float) $invoice->payments->sum('jumlah_pembayaran');
+    $paymentTercatat = $invoice->payments->first();
+    $tanggalTerakhirPenyiaran = $invoice->pks->items->max('tanggal_selesai')
+        ?? $invoice->pks->items->max('tanggal_mulai')
+        ?? $invoice->pks->tanggal;
+@endphp
 <div class="container-fluid">
     <div class="mb-4 d-flex justify-content-between align-items-center">
         <div>
             <a href="{{ route('invoice.index') }}" class="btn btn-outline-secondary btn-sm mb-2">
                 <i class="bi bi-arrow-left"></i> Kembali ke Daftar
             </a>
-            @if($invoice->status !== 'paid')
+            @if(auth()->user()->isPenyetor() && $invoice->status !== 'paid')
                 <a href="{{ route('invoice.edit', $invoice->id) }}" class="btn btn-outline-primary btn-sm mb-2 ms-1">
                     <i class="bi bi-pencil-square"></i> Edit Invoice
                 </a>
@@ -54,6 +61,30 @@
                         </div>
                     </div>
 
+                    <div class="p-3 bg-light rounded border mb-4">
+                        <h6 class="mb-3 fw-bold text-dark">Ringkasan Pembayaran</h6>
+                        <div class="row">
+                            <div class="col-md-4 mb-2 mb-md-0">
+                                <span class="text-muted small d-block">Nominal Invoice</span>
+                                <strong>Rp {{ number_format($invoice->nominal, 0, ',', '.') }}</strong>
+                            </div>
+                            <div class="col-md-4 mb-2 mb-md-0">
+                                <span class="text-muted small d-block">Status Pembayaran</span>
+                                @if($invoice->status === 'paid')
+                                    <strong class="text-success">Lunas</strong>
+                                @elseif($totalDibayar > 0)
+                                    <strong class="text-danger">Belum Sesuai Invoice</strong>
+                                @else
+                                    <strong class="text-warning">Belum Dibayar</strong>
+                                @endif
+                            </div>
+                            <div class="col-md-4">
+                                <span class="text-muted small d-block">Nominal Dibayar</span>
+                                <strong class="{{ $totalDibayar > 0 ? 'text-success' : 'text-muted' }}">Rp {{ number_format($totalDibayar, 0, ',', '.') }}</strong>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="row border-top pt-3 mb-3">
                         <div class="col-sm-6 mb-3">
                             <span class="text-muted small d-block">Tanggal Invoice:</span>
@@ -62,6 +93,7 @@
                         <div class="col-sm-6 mb-3">
                             <span class="text-muted small d-block">Tanggal Jatuh Tempo:</span>
                             <strong class="text-gray-800">{{ $invoice->tanggal_jatuh_tempo->format('d F Y') }}</strong>
+                            <small class="text-muted d-block">28 hari setelah penyiaran terakhir.</small>
                         </div>
                     </div>
 
@@ -80,6 +112,10 @@
                             <div class="col-md-6">
                                 <span class="text-muted small d-block">Tanggal Kontrak:</span>
                                 <span>{{ \Carbon\Carbon::parse($invoice->pks->tanggal)->format('d M Y') }}</span>
+                            </div>
+                            <div class="col-md-6">
+                                <span class="text-muted small d-block">Tanggal Terakhir Penyiaran:</span>
+                                <strong>{{ \Carbon\Carbon::parse($tanggalTerakhirPenyiaran)->format('d M Y') }}</strong>
                             </div>
                             <div class="col-md-6">
                                 <span class="text-muted small d-block">Total Nilai PKS:</span>
@@ -123,6 +159,88 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Data Penandatangan Invoice -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h5 class="m-0 text-dark fw-semibold">
+                        <i class="bi bi-pen me-2"></i>Data Penandatangan Invoice
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <span class="text-muted small d-block">Nama Penyetor:</span>
+                            <strong>{{ $invoice->penyetor_nama ?? '-' }}</strong>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <span class="text-muted small d-block">NIP Penyetor:</span>
+                            <strong>{{ $invoice->penyetor_nip ?? '-' }}</strong>
+                        </div>
+                        <div class="col-md-6 mb-3 mb-md-0">
+                            <span class="text-muted small d-block">Nama Kepala Stasiun:</span>
+                            <strong>{{ $invoice->kepala_stasiun_nama ?? '-' }}</strong>
+                        </div>
+                        <div class="col-md-6">
+                            <span class="text-muted small d-block">NIP Kepala Stasiun:</span>
+                            <strong>{{ $invoice->kepala_stasiun_nip ?? '-' }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Riwayat Pembayaran -->
+            <div class="card shadow-sm border-0 mb-4">
+                <div class="card-header bg-white py-3 border-bottom">
+                    <h5 class="m-0 text-dark fw-semibold">
+                        <i class="bi bi-clock-history me-2"></i>Riwayat Pembayaran
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    @if($invoice->payments->isNotEmpty())
+                        <div class="table-responsive">
+                            <table class="table table-hover align-middle mb-0">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th class="px-4 py-3">Tanggal</th>
+                                        <th class="py-3">Nomor Pembayaran</th>
+                                        <th class="py-3">Kode Billing</th>
+                                        <th class="py-3">NTPN</th>
+                                        <th class="py-3 text-end">Jumlah</th>
+                                        <th class="px-4 py-3 text-center">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach($invoice->payments as $payment)
+                                        <tr>
+                                            <td class="px-4 py-3">{{ $payment->tanggal_pembayaran->format('d M Y') }}</td>
+                                            <td class="py-3 fw-semibold">{{ $payment->nomor_pembayaran ?? '-' }}</td>
+                                            <td class="py-3">
+                                                @if($payment->kode_billing)
+                                                    <code>{{ $payment->kode_billing }}</code>
+                                                @else
+                                                    <span class="text-muted">-</span>
+                                                @endif
+                                            </td>
+                                            <td class="py-3">{{ $payment->ntpn ?? '-' }}</td>
+                                            <td class="py-3 text-end fw-bold">Rp {{ number_format($payment->jumlah_pembayaran, 0, ',', '.') }}</td>
+                                            <td class="px-4 py-3 text-center">
+                                                <a href="{{ route('payment.kwitansi', $payment->id) }}" target="_blank" class="btn btn-outline-success btn-sm">
+                                                    <i class="bi bi-printer me-1"></i> Kwitansi
+                                                </a>
+                                            </td>
+                                        </tr>
+                                    @endforeach
+                                </tbody>
+                            </table>
+                        </div>
+                    @else
+                        <div class="text-center py-4 text-muted">
+                            Belum ada pembayaran yang dicatat untuk invoice ini.
+                        </div>
+                    @endif
+                </div>
+            </div>
         </div>
 
         <!-- SIMPONI Billing & Panel Pembayaran (Sisi Kanan) -->
@@ -137,11 +255,11 @@
                 <div class="card-body">
                     @if($invoice->kode_billing)
                         <div class="text-center py-3 bg-light rounded border border-dashed mb-3">
-                            <span class="text-muted small d-block mb-1">KODE BILLING AKTIF</span>
+                            <span class="text-muted small d-block mb-1">{{ $invoice->status === 'paid' ? 'KODE BILLING TERCATAT' : 'KODE BILLING AKTIF' }}</span>
                             <span class="fs-4 fw-bold font-monospace tracking-wide text-dark">{{ $invoice->kode_billing }}</span>
                         </div>
                         
-                        @if($invoice->status === 'unpaid')
+                        @if(auth()->user()->isPenyetor() && $invoice->status === 'unpaid')
                             <!-- Tombol Ubah Kode Billing -->
                             <button type="button" class="btn btn-outline-secondary btn-sm w-100 mb-2" data-bs-toggle="collapse" data-bs-target="#editBillingForm">
                                 <i class="bi bi-pencil-square me-1"></i> Edit Kode Billing
@@ -154,25 +272,27 @@
                     @endif
 
                     <!-- Form Input / Edit Kode Billing -->
-                    <div class="collapse {{ !$invoice->kode_billing ? 'show' : '' }}" id="editBillingForm">
-                        <form action="{{ route('invoice.updateBilling', $invoice->id) }}" method="POST" class="border p-3 rounded bg-light">
-                            @csrf
-                            @method('PATCH')
-                            <div class="mb-3">
-                                <label for="kode_billing_input" class="form-label small fw-semibold">Input Kode Billing SIMPONI</label>
-                                <input type="text" 
-                                       name="kode_billing" 
-                                       id="kode_billing_input" 
-                                       class="form-control form-control-sm font-monospace" 
-                                       value="{{ $invoice->kode_billing }}" 
-                                       placeholder="15 Digit Kode Billing" 
-                                       required>
-                            </div>
-                            <button type="submit" class="btn btn-primary btn-sm w-100">
-                                <i class="bi bi-save me-1"></i> Simpan Kode Billing
-                            </button>
-                        </form>
-                    </div>
+                    @if(auth()->user()->isPenyetor())
+                        <div class="collapse {{ !$invoice->kode_billing ? 'show' : '' }}" id="editBillingForm">
+                            <form action="{{ route('invoice.updateBilling', $invoice->id) }}" method="POST" class="border p-3 rounded bg-light">
+                                @csrf
+                                @method('PATCH')
+                                <div class="mb-3">
+                                    <label for="kode_billing_input" class="form-label small fw-semibold">Input Kode Billing SIMPONI</label>
+                                    <input type="text" 
+                                           name="kode_billing" 
+                                           id="kode_billing_input" 
+                                           class="form-control form-control-sm font-monospace" 
+                                           value="{{ $invoice->kode_billing }}" 
+                                           placeholder="15 Digit Kode Billing" 
+                                           required>
+                                </div>
+                                <button type="submit" class="btn btn-primary btn-sm w-100">
+                                    <i class="bi bi-save me-1"></i> Simpan Kode Billing
+                                </button>
+                            </form>
+                        </div>
+                    @endif
                 </div>
             </div>
 
@@ -192,16 +312,23 @@
                             <small class="text-muted d-block mt-1">Pembayaran telah terverifikasi NTPN</small>
                         </div>
                         
-                        <!-- Bukti NTPN dan Kwitansi Placeholder -->
                         <div class="p-3 bg-light rounded border mb-2">
-                            <span class="text-muted small d-block">Bukti Pembayaran (NTPN):</span>
-                            <strong class="fs-6 text-dark font-monospace" id="ntpn_display">Telah Dilunasi</strong>
+                            <span class="text-muted small d-block">NTPN:</span>
+                            <strong class="fs-6 text-dark font-monospace">{{ $paymentTercatat->ntpn ?? '-' }}</strong>
                             
                             <hr class="my-2">
                             
-                            <a href="#" class="btn btn-success btn-sm w-100">
-                                <i class="bi bi-printer me-1"></i> Cetak Kwitansi Resmi
-                            </a>
+                            @if($paymentTercatat)
+                                <a href="{{ route('payment.kwitansi', $paymentTercatat->id) }}" target="_blank" class="btn btn-success btn-sm w-100">
+                                    <i class="bi bi-printer me-1"></i> Cetak Kwitansi Resmi
+                                </a>
+                            @endif
+                        </div>
+                    @elseif($totalDibayar > 0)
+                        <div class="text-center py-3 bg-danger-subtle text-danger border border-danger rounded mb-3">
+                            <i class="bi bi-exclamation-triangle-fill fs-1 d-block mb-2"></i>
+                            <span class="fw-bold d-block">PEMBAYARAN BELUM SESUAI INVOICE</span>
+                            <small class="text-muted d-block mt-1">Invoice harus dibayar sesuai nominal tagihan.</small>
                         </div>
                     @else
                         <!-- Tampilan Jika Belum Lunas -->
@@ -211,17 +338,15 @@
                             <small class="text-muted d-block mt-1">Minta mitra membayar via SIMPONI</small>
                         </div>
 
-                        @if($invoice->kode_billing)
+                        @if(auth()->user()->isPenyetor() && $invoice->kode_billing)
                             <div class="p-3 bg-light rounded border border-primary-subtle text-center">
                                 <span class="d-block small text-muted mb-2">Apakah klien sudah menyetorkan pembayaran dan memberikan NTPN?</span>
-                                
-                                <!-- Placeholder tombol ke form pencatatan payment yang akan dikerjakan di tahap berikutnya -->
-                                <button class="btn btn-primary btn-sm w-100 disabled" title="Modul Pembayaran Akan Segera Hadir">
-                                    <i class="bi bi-plus-circle me-1"></i> Entri NTPN Pembayaran
-                                </button>
-                                <small class="text-muted mt-2 d-block xs-text">Modul Entri Pembayaran sedang dipersiapkan.</small>
+
+                                <a href="{{ route('payment.create', ['invoice_id' => $invoice->id]) }}" class="btn btn-primary btn-sm w-100">
+                                    <i class="bi bi-plus-circle me-1"></i> Entri Pembayaran
+                                </a>
                             </div>
-                        @else
+                        @elseif(auth()->user()->isPenyetor())
                             <div class="alert alert-secondary py-2 small mb-0 text-center">
                                 <i class="bi bi-exclamation-triangle me-1"></i> Harap input Kode Billing SIMPONI terlebih dahulu untuk mengaktifkan pembayaran.
                             </div>

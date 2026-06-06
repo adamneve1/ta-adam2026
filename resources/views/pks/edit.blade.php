@@ -20,8 +20,8 @@
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
-                    <h3 class="mb-1">Buat PKS</h3>
-                    <p class="text-muted mb-0">Lengkapi informasi kontrak, client, item, dan tinjau ulang sebelum menyimpan.</p>
+                    <h3 class="mb-1">Edit PKS</h3>
+                    <p class="text-muted mb-0">Ubah informasi kontrak, client, item, dan tinjau ulang sebelum menyimpan pembaruan.</p>
                 </div>
             </div>
 
@@ -50,18 +50,18 @@
                 </div>
             </div>
 
-            <form action="{{ route('pks.store') }}" method="POST">
+            <form action="{{ route('pks.update', $pks->id) }}" method="POST">
                 @csrf
+                @method('PUT')
 
                 @include('pks.partials.step-kontrak')
-@include('pks.partials.step-client')
-@include('pks.partials.step-items')
-@include('pks.partials.step-review')
+                @include('pks.partials.step-client')
+                @include('pks.partials.step-items')
+                @include('pks.partials.step-review')
             </form>
         </div>
     </div>
 </div>  
-               
 
 <script>
 document.addEventListener('alpine:init', () => {
@@ -69,9 +69,8 @@ document.addEventListener('alpine:init', () => {
         step: 1,
         totalSteps: 4,
         toastMessage: '',
-        clientMode: @json(old('client_mode', old('client_id') ? 'registered' : 'new')),
+        clientMode: @json(old('client_mode', old('client_id', $pks->client_id) ? 'registered' : 'new')),
 
-        
         // Data dari Laravel DB
         clients: @json($clients),
         katalogMap: {
@@ -85,34 +84,33 @@ document.addEventListener('alpine:init', () => {
             @endforeach
         },
 
-        // State Form Utama (Mengambil nilai old() jika gagal submit)
+        // State Form Utama (Mengambil nilai old() atau dari db)
         form: {
-            judul: @json(old('judul', '')),
-            nomor_referensi: @json(old('nomor_referensi', '')),
-            tanggal: @json(old('tanggal', '')),
-            deskripsi: @json(old('deskripsi', '')),
-            client_id: @json(old('client_id', '')),
+            judul: @json(old('judul', $pks->judul)),
+            nomor_referensi: @json(old('nomor_referensi', $pks->nomor_referensi)),
+            tanggal: @json(old('tanggal', $pks->tanggal)),
+            deskripsi: @json(old('deskripsi', $pks->deskripsi)),
+            client_id: @json(old('client_id', $pks->client_id)),
             client: {
-                jenis_klien: @json(old('client.jenis_klien', '')),
-                nama: @json(old('client.nama', '')),
-                nama_narahubung: @json(old('client.nama_narahubung', '')),
-                no_narahubung: @json(old('client.no_narahubung', '')),
-                email: @json(old('client.email', '')),
+                jenis_klien: @json(old('client.jenis_klien', $pks->client->jenis_klien ?? '')),
+                nama: @json(old('client.nama', $pks->client->nama ?? '')),
+                nama_narahubung: @json(old('client.nama_narahubung', $pks->client->nama_narahubung ?? '')),
+                no_narahubung: @json(old('client.no_narahubung', $pks->client->no_narahubung ?? '')),
+                email: @json(old('client.email', $pks->client->email ?? '')),
                 sameAsContact: false,
-                nama_penanggung_jawab: @json(old('client.nama_penanggung_jawab', '')),
-                jabatan: @json(old('client.jabatan', '')),
-                alamat: @json(old('client.alamat', '')),
-                catatan: @json(old('client.catatan', '')),
+                nama_penanggung_jawab: @json(old('client.nama_penanggung_jawab', $pks->client->nama_penanggung_jawab ?? '')),
+                jabatan: @json(old('client.jabatan', $pks->client->jabatan ?? '')),
+                alamat: @json(old('client.alamat', $pks->client->alamat ?? '')),
+                catatan: @json(old('client.catatan', $pks->client->catatan ?? '')),
             }
         },
 
         // State Items
         items: [],
         
-
         init() {
-            // Ambil array old('items') jika ada
-            let oldItems = @json(old('items', []));
+            // Ambil array old('items') atau $pks->items jika ada
+            let oldItems = @json(old('items', $pks->items->toArray()));
             
             // Konversi old() menjadi array Alpine
             if (Object.keys(oldItems).length > 0) {

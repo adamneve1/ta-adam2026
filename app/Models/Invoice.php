@@ -17,6 +17,10 @@ class Invoice extends Model
         'tanggal_jatuh_tempo',
         'status',
         'kode_billing',
+        'penyetor_nama',
+        'penyetor_nip',
+        'kepala_stasiun_nama',
+        'kepala_stasiun_nip',
     ];
 
     protected $casts = [
@@ -31,5 +35,10 @@ class Invoice extends Model
     public function pks()
     {
         return $this->belongsTo(Pks::class);
+    }
+
+    public function payments()
+    {
+        return $this->hasMany(Payment::class);
     }
 }

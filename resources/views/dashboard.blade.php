@@ -133,9 +133,9 @@
                                         <td>{{ $pks->items->count() }} item</td>
                                         <td>Rp {{ number_format($pks->items->sum(function($item) { return $item->qty * $item->tarif; }), 0, ',', '.') }}</td>
                                         <td>
-                                            <a href="{{ route('pks.show', $pks) }}" class="btn btn-sm btn-outline-primary">
-                                                <i class="fas fa-eye"></i>
-                                            </a>
+                        <a href="{{ route('pks.cetak', $pks->id) }}" target="_blank" class="btn btn-sm btn-outline-primary">
+                            <i class="fas fa-eye"></i>
+                        </a>
                                         </td>
                                     </tr>
                                 @endforeach
@@ -146,9 +146,11 @@
                     <div class="text-center py-4">
                         <i class="fas fa-file-contract fa-3x text-muted mb-3"></i>
                         <p class="text-muted">Belum ada PKS yang dibuat</p>
-                        <a href="{{ route('pks.create') }}" class="btn btn-primary">
-                            <i class="fas fa-plus me-1"></i>Buat PKS Pertama
-                        </a>
+                        @if(auth()->user()->isLpu())
+                            <a href="{{ route('pks.create') }}" class="btn btn-primary">
+                                <i class="fas fa-plus me-1"></i>Buat PKS Pertama
+                            </a>
+                        @endif
                     </div>
                 @endif
             </div>
@@ -165,18 +167,22 @@
             </div>
             <div class="card-body">
                 <div class="d-grid gap-2">
-                    <a href="{{ route('pks.create') }}" class="btn btn-primary btn-custom">
-                        <i class="fas fa-plus-circle me-2"></i>Buat PKS Baru
-                    </a>
-                    <a href="{{ route('katalog.create') }}" class="btn btn-success btn-custom">
-                        <i class="fas fa-list me-2"></i>Tambah Katalog
-                    </a>
+                    @if(auth()->user()->isLpu())
+                        <a href="{{ route('pks.create') }}" class="btn btn-primary btn-custom">
+                            <i class="fas fa-plus-circle me-2"></i>Buat PKS Baru
+                        </a>
+                        <a href="{{ route('katalog.create') }}" class="btn btn-success btn-custom">
+                            <i class="fas fa-list me-2"></i>Tambah Katalog
+                        </a>
+                    @endif
                     <a href="{{ route('pks.index') }}" class="btn btn-info btn-custom">
                         <i class="fas fa-file-contract me-2"></i>Lihat Semua PKS
                     </a>
-                    <a href="{{ route('katalog.index') }}" class="btn btn-secondary btn-custom">
-                        <i class="fas fa-list-alt me-2"></i>Lihat Katalog
-                    </a>
+                    @if(auth()->user()->isLpu())
+                        <a href="{{ route('katalog.index') }}" class="btn btn-secondary btn-custom">
+                            <i class="fas fa-list-alt me-2"></i>Lihat Katalog
+                        </a>
+                    @endif
                 </div>
             </div>
         </div>

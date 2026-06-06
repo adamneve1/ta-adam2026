@@ -26,6 +26,14 @@ class ProfileUpdateRequest extends FormRequest
                 'max:255',
                 Rule::unique(User::class)->ignore($this->user()->id),
             ],
+            'nip' => ['nullable', 'regex:/^\d{18}$/'],
+        ];
+    }
+
+    public function messages(): array
+    {
+        return [
+            'nip.regex' => 'NIP harus berisi tepat 18 digit angka.',
         ];
     }
 }

@@ -21,7 +21,7 @@ h1, h2, h3, h4, h5, h6 {
     font-weight: 600;
 }
 
-    </style>
+    </style> 
 
 </head>
 <body class="bg-light">
@@ -74,7 +74,7 @@ h1, h2, h3, h4, h5, h6 {
                             </div>
                             <div class="text-start d-none d-sm-block me-1">
                                 <span class="d-block text-dark fw-bold small" style="line-height: 1.2;">{{ Auth::user()->name }}</span>
-                                <small class="text-muted d-block" style="font-size: 10px; line-height: 1;">Administrator</small>
+                                <small class="text-muted d-block" style="font-size: 10px; line-height: 1;">{{ Auth::user()->role }}</small>
                             </div>
                         </button>
                         

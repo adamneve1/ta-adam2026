@@ -21,7 +21,10 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
+        'nip',
         'password',
+        'role',
+        'email_verified_at',
     ];
 
     /**
@@ -46,4 +49,24 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+public function isAtasan(): bool
+{
+    return in_array($this->role, ['atasan', 'Kepala Stasiun'], true);
+}
+
+public function isKepsta(): bool
+{
+    return $this->isAtasan();
+}
+
+public function isLpu(): bool
+{
+    return $this->role === 'lpu';
+}
+
+public function isPenyetor(): bool
+{
+    return $this->role === 'penyetor';
+}
 }

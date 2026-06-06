@@ -104,7 +104,7 @@
         }
     </style>
 </head>
-<body>
+<body>  
 
     <!-- KOP SURAT RRI BATAM -->
     <table class="header-table">
@@ -190,14 +190,16 @@
     <table class="footer-table">
         <tr>
             <td>
-                <!-- Sisi Kiri: Kosong atau Tanda Tangan Penerima -->
+                <p><strong>Penyetor RRI Batam</strong></p>
+                <br><br><br><br>
+                <p><strong>{{ $invoice->penyetor_nama ?? '___________________________' }}</strong></p>
+                <p>NIP. {{ $invoice->penyetor_nip ?? '........................................' }}</p>
             </td>
             <td>
-                <p>Batam, {{ $invoice->tanggal_invoice->format('d F Y') }}</p>
-                <p><strong>Kuasa Pengguna Anggaran (KPA) /<br>Bendahara Penerimaan LPP RRI Batam</strong></p>
+                <p><strong>Kepala Stasiun RRI Batam</strong></p>
                 <br><br><br><br>
-                <p>___________________________</p>
-                <p>NIP. ........................................</p>
+                <p><strong>{{ $invoice->kepala_stasiun_nama ?? '___________________________' }}</strong></p>
+                <p>NIP. {{ $invoice->kepala_stasiun_nip ?? '........................................' }}</p>
             </td>
         </tr>
     </table>

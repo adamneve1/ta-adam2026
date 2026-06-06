@@ -48,6 +48,8 @@
     $proses_hari_invoice = 5;
     $persen_denda = 2;
     $tanggal_jatuh_tempo = $jatuhTempo->translatedFormat('d F Y');
+    $masa_berlaku_awal = $docDate->translatedFormat('d F Y');
+    $masa_berlaku_akhir = $jatuhTempo->translatedFormat('d F Y');
     $harga_satuan = (int)($itemUtama?->tarif ?? 35000);
     $total_biaya_angka = (int)($pks->total ?? 2100000);
 
@@ -391,7 +393,7 @@
         <!-- LIST PASAL 4 -->
         <div class="list-item">
             <span class="list-number">1.</span>
-            <span class="list-text">Perjanjian ini berlaku tanggal {{ $periode_awal }} sampai dengan {{ $periode_akhir }}</span>
+            <span class="list-text">Perjanjian ini berlaku tanggal {{ $masa_berlaku_awal }} sampai dengan {{ $masa_berlaku_akhir }}</span>
         </div>
         <div class="list-item">
             <span class="list-number">2.</span>
