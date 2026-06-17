@@ -48,12 +48,17 @@
                     <select name="role" id="role" class="form-select @error('role') is-invalid @enderror" required>
                         <option value="">Pilih role</option>
                         @foreach($roles as $value => $label)
-                            <option value="{{ $value }}" {{ old('role') === $value ? 'selected' : '' }}>{{ $label }}</option>
+                            <option value="{{ $value }}" {{ old('role') === $value ? 'selected' : '' }} {{ $value === 'kepala_stasiun' && $kepalaStasiunExists ? 'disabled' : '' }}>
+                                {{ $label }}{{ $value === 'kepala_stasiun' && $kepalaStasiunExists ? ' (sudah ada)' : '' }}
+                            </option>
                         @endforeach
                     </select>
                     @error('role')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
+                    @if($kepalaStasiunExists)
+                        <div class="form-text">Role Kepala Stasiun hanya boleh dimiliki satu akun.</div>
+                    @endif
                 </div>
 
                 <div class="row">

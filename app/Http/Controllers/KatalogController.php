@@ -10,7 +10,18 @@ class KatalogController extends Controller
 {
     public function index()
     {
-        $katalogs = Katalog::latest()->get();
+        $keyword = request('keyword');
+
+        $katalogs = Katalog::with('tarifs')
+            ->when($keyword, function ($query) use ($keyword) {
+                $query->where(function ($q) use ($keyword) {
+                    $q->where('nama_layanan', 'like', '%' . $keyword . '%')
+                        ->orWhere('deskripsi', 'like', '%' . $keyword . '%');
+                });
+            })
+            ->latest()
+            ->get();
+
         return view('katalog.index', compact('katalogs'));
     }
 

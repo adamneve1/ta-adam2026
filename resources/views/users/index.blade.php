@@ -50,7 +50,7 @@
                                 <td class="py-3 text-muted">{{ $user->nip ?: '-' }}</td>
                                 <td class="py-3">
                                     <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
-                                        {{ $roles[$user->role] ?? $user->role ?? '-' }}
+                                        {{ $user->roleLabel() }}
                                     </span>
                                 </td>
                                 <td class="py-3 text-muted">{{ $user->created_at?->format('d M Y') ?? '-' }}</td>
@@ -66,7 +66,7 @@
                                                     <i class="bi bi-pencil-fill text-warning me-2"></i> Edit Akun
                                                 </a>
                                             </li>
-                                            @if(! $user->is(auth()->user()))
+                                            @if(! $user->is(auth()->user()) && ! $user->isKepsta() && ! ($user->isAdmin() && $adminCount <= 1))
                                                 <li><hr class="dropdown-divider"></li>
                                                 <li>
                                                     <form action="{{ route('users.destroy', $user->id) }}" method="POST">
@@ -76,6 +76,13 @@
                                                             <i class="bi bi-trash-fill me-2"></i> Hapus Akun
                                                         </button>
                                                     </form>
+                                                </li>
+                                            @elseif($user->isKepsta() || ($user->isAdmin() && $adminCount <= 1))
+                                                <li><hr class="dropdown-divider"></li>
+                                                <li>
+                                                    <span class="dropdown-item py-2 text-muted">
+                                                        <i class="bi bi-lock-fill me-2"></i> Tidak bisa dihapus
+                                                    </span>
                                                 </li>
                                             @endif
                                         </ul>

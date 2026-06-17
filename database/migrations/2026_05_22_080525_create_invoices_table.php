@@ -18,7 +18,7 @@ return new class extends Migration
             $table->decimal('nominal', 15, 2);
             $table->date('tanggal_invoice');
             $table->date('tanggal_jatuh_tempo');
-            $table->string('status')->default('Belum_Bayar'); // unpaid, paid
+            $table->string('status')->default('belum_billing');
             $table->string('kode_billing')->nullable(); // SIMPONI billing code
             $table->timestamps();
         });

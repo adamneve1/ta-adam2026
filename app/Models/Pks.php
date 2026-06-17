@@ -51,7 +51,7 @@ class Pks extends Model
         }
 
         return Carbon::parse($this->tanggal_terakhir_penyiaran)
-            ->addDays(28)
+            ->addDays(20)
             ->toDateString();
     }
 }

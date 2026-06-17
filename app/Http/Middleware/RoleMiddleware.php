@@ -13,16 +13,22 @@ class RoleMiddleware
      *
      * @param  Closure(Request): (Response)  $next
      */
-   public function handle(Request $request, Closure $next, ...$roles): Response
-{
-    if (! auth()->check()) {
-        abort(403);
-    }
+    public function handle(Request $request, Closure $next, ...$roles): Response
+    {
+        if (! auth()->check()) {
+            abort(403);
+        }
 
-    if (! in_array(auth()->user()->role, $roles)) {
-        abort(403);
-    }
+        $role = auth()->user()->normalizedRole();
+        $allowedRoles = array_map(fn ($role) => match ($role) {
+            'atasan', 'Kepala Stasiun', 'kepsta' => 'kepala_stasiun',
+            default => $role,
+        }, $roles);
 
-    return $next($request);
-}
+        if (! in_array($role, $allowedRoles, true)) {
+            abort(403);
+        }
+
+        return $next($request);
+    }
 }

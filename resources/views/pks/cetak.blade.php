@@ -2,10 +2,13 @@
     \Carbon\Carbon::setLocale('id');
 
     $docDate = \Carbon\Carbon::parse($pks->tanggal);
-    $itemUtama = $pks->items->first();
-    $periodeAwal = $itemUtama?->tanggal_mulai ? \Carbon\Carbon::parse($itemUtama->tanggal_mulai) : $docDate;
-    $periodeAkhir = $itemUtama?->tanggal_selesai ? \Carbon\Carbon::parse($itemUtama->tanggal_selesai) : $docDate;
-    $jatuhTempo = $periodeAkhir->copy()->addDays(28);
+    $items = collect($pks->items ?? [])->values();
+    $itemUtama = $items->first();
+    $tanggalMulaiItems = $items->pluck('tanggal_mulai')->filter();
+    $tanggalSelesaiItems = $items->pluck('tanggal_selesai')->filter();
+    $periodeAwal = $tanggalMulaiItems->isNotEmpty() ? \Carbon\Carbon::parse($tanggalMulaiItems->min()) : $docDate;
+    $periodeAkhir = $tanggalSelesaiItems->isNotEmpty() ? \Carbon\Carbon::parse($tanggalSelesaiItems->max()) : $docDate;
+    $jatuhTempo = $periodeAkhir->copy()->addDays(20);
 
     $nama_instansi_p1 = 'Lembaga Penyiaran Publik Radio Republik Indonesia';
     $nama_instansi_p2 = $pks->client->nama ?: 'Universitas Ibnu Sina';
@@ -41,8 +44,8 @@
     $jabatan_p2 = $pks->client->jabatan ?: 'Koordinator Promosi';
     $alamat_p2 = $pks->client->alamat ?: 'Lubuk Baja, Kecamatan Lubuk Baja, Kota Batam, Kepulauan Riau 29444';
 
-    $media_penyiaran = strtoupper($itemUtama?->channel ?? 'Pro 2');
-    $jumlah_siaran = (int)($itemUtama?->qty ?? 60);
+    $media_penyiaran = $items->pluck('channel')->filter()->map(fn ($channel) => strtoupper($channel))->unique()->implode(', ') ?: 'PRO 2';
+    $jumlah_siaran = (int) $items->sum('qty');
     $periode_awal = $periodeAwal->translatedFormat('d F Y');
     $periode_akhir = $periodeAkhir->translatedFormat('d F Y');
     $proses_hari_invoice = 5;
@@ -50,7 +53,6 @@
     $tanggal_jatuh_tempo = $jatuhTempo->translatedFormat('d F Y');
     $masa_berlaku_awal = $docDate->translatedFormat('d F Y');
     $masa_berlaku_akhir = $jatuhTempo->translatedFormat('d F Y');
-    $harga_satuan = (int)($itemUtama?->tarif ?? 35000);
     $total_biaya_angka = (int)($pks->total ?? 2100000);
 
     $total_biaya_kata = trim(preg_replace('/\s+/', ' ', $penyebut($total_biaya_angka))) . ' rupiah';
@@ -334,8 +336,20 @@
         
         <div class="list-item">
             <span class="list-number">1.</span>
-            <span class="list-text">PARA PIHAK sepakat melakukan kerjasama dalam penyelenggaraan kerjasama Jasa Penyiaran, berupa Siaran Iklan (Spot / Jingle / Filler / Advertorial) yang disiarkan melalui {{ $media_penyiaran }} sebanyak {{ $jumlah_siaran }} kali siar dengan jangka waktu siar {{ $periode_awal }} - {{ $periode_akhir }}.</span>
+            <span class="list-text">PARA PIHAK sepakat melakukan kerjasama dalam penyelenggaraan kerjasama Jasa Penyiaran yang disiarkan melalui {{ $media_penyiaran }} sebanyak {{ $jumlah_siaran }} kali siar dengan jangka waktu siar {{ $periode_awal }} - {{ $periode_akhir }}, dengan rincian sebagai berikut:</span>
         </div>
+        @foreach($items as $item)
+            <div class="list-sub-item">
+                <span class="list-sub-number">{{ chr(96 + $loop->iteration) }}.</span>
+                <span class="list-text">
+                    {{ $item->katalog->nama_layanan ?? 'Jasa Penyiaran' }}
+                    melalui {{ strtoupper($item->channel ?? '-') }}
+                    periode {{ $item->tanggal_mulai ? \Carbon\Carbon::parse($item->tanggal_mulai)->translatedFormat('d F Y') : '-' }}
+                    - {{ $item->tanggal_selesai ? \Carbon\Carbon::parse($item->tanggal_selesai)->translatedFormat('d F Y') : '-' }}
+                    sebanyak {{ (int) ($item->qty ?? 0) }} kali siar.
+                </span>
+            </div>
+        @endforeach
         <div class="list-item">
             <span class="list-number">2.</span>
             <span class="list-text">Besaran dan Tata Cara Pengenaan Tarif PNBP yang berlaku atas kerjasama Penyiaran mengacu pada PP. No.68 Tahun 2020 dan Peraturan Dirut RRI No. 5 Tahun 2023.</span>
@@ -381,10 +395,6 @@
         </div>
         <p>Pembayaran dilakukan dengan cara menyetor langsung ke rekening kas Negara, melalui Billing Simponi.</p>
 
-    </div>
-
-    <!-- ================= HALAMAN 3 ================= -->
-    <div class="page">
         <!-- PASAL 4 -->
         <div class="pasal-title" style="margin-bottom: 16px;">
             PASAL 4<br>JANGKA WAKTU
@@ -417,10 +427,19 @@
             <span class="list-number">2.</span>
             <span class="list-text">Biaya Jasa Penyiaran:</span>
         </div>
-        <div class="list-sub-item">
-            <span class="list-sub-number">a.</span>
-            <span class="list-text">Siaran Iklan (Spot / Jingle / Filler / Advertorial), Prime Time sebanyak {{ $jumlah_siaran }} kali: {{ $jumlah_siaran }} x {{ number_format($harga_satuan, 0, ',', '.') }} = Rp {{ number_format($total_biaya_angka, 0, ',', '.') }}</span>
-        </div>
+        @foreach($items as $item)
+            <div class="list-sub-item">
+                <span class="list-sub-number">{{ chr(96 + $loop->iteration) }}.</span>
+                <span class="list-text">
+                    {{ $item->katalog->nama_layanan ?? 'Jasa Penyiaran' }},
+                    {{ ($item->waktu ?? 'regular') === 'prime' ? 'Prime Time' : 'Regular Time' }},
+                    {{ strtoupper($item->channel ?? '-') }}
+                    sebanyak {{ (int) ($item->qty ?? 0) }} kali:
+                    {{ (int) ($item->qty ?? 0) }} x {{ number_format((int) ($item->tarif ?? 0), 0, ',', '.') }}
+                    = Rp {{ number_format((int) ($item->subtotal ?? 0), 0, ',', '.') }}
+                </span>
+            </div>
+        @endforeach
         <div class="list-item" style="margin-top: 15px;">
             <span class="list-number">3.</span>
             <span class="list-text">Total Biaya : Rp {{ number_format($total_biaya_angka, 0, ',', '.') }} ({{ ucwords($total_biaya_kata) }})</span>
@@ -459,7 +478,7 @@
         </div>
     </div>
 
-    <!-- ================= HALAMAN 4 ================= -->
+    <!-- ================= HALAMAN 3 ================= -->
     <div class="page">
         <!-- PASAL 8 -->
         <div class="pasal-title">

@@ -1,7 +1,7 @@
 @extends('layouts.app')
 
 @section('content')
-<div class="container-fluid" style="max-width: 900px;">
+<div class="container-fluid mx-auto" style="max-width: 1200px;">
     <div class="mb-4">
         <a href="{{ route('payment.index') }}" class="btn btn-outline-secondary btn-sm mb-3">
             <i class="bi bi-arrow-left"></i> Kembali ke Daftar Pembayaran
@@ -20,99 +20,166 @@
         </div>
     @endif
 
-    <div class="card shadow-sm border-0">
-        <div class="card-body p-4">
-            <form action="{{ route('payment.update', $payment->id) }}" method="POST" enctype="multipart/form-data">
-                @csrf
-                @method('PUT')
+    <form action="{{ route('payment.update', $payment->id) }}" method="POST" enctype="multipart/form-data">
+        @csrf
+        @method('PUT')
+        @php
+            $showKwitansiFields = $errors->has('kwitansi_penyetor_nama')
+                || $errors->has('kwitansi_penyetor_nip')
+                || $errors->has('kwitansi_kepala_stasiun_nama')
+                || $errors->has('kwitansi_kepala_stasiun_nip');
+        @endphp
 
-                <div class="p-3 bg-light rounded border mb-4">
-                    <div class="row">
-                        <div class="col-md-6 mb-2">
-                            <small class="text-muted d-block">Nomor Pembayaran</small>
-                            <strong>{{ $payment->nomor_pembayaran ?? '-' }}</strong>
+        <div class="row g-4 align-items-start">
+            <div class="col-lg-7">
+                <div class="card shadow-sm border-0">
+                    <div class="card-body p-4">
+                        <div class="row g-3 mb-3">
+                            <div class="col-md-6">
+                                <label for="tanggal_pembayaran" class="form-label fw-semibold">Tanggal Pembayaran <span class="text-danger">*</span></label>
+                                <input type="date" name="tanggal_pembayaran" id="tanggal_pembayaran" class="form-control @error('tanggal_pembayaran') is-invalid @enderror" value="{{ old('tanggal_pembayaran', $payment->tanggal_pembayaran->format('Y-m-d')) }}" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="ntpn" class="form-label fw-semibold">NTPN <span class="text-danger">*</span></label>
+                                <input type="text" name="ntpn" id="ntpn" class="form-control @error('ntpn') is-invalid @enderror" value="{{ old('ntpn', $payment->ntpn) }}" required>
+                            </div>
                         </div>
-                        <div class="col-md-6 mb-2">
-                            <small class="text-muted d-block">Invoice</small>
-                            <strong>{{ $payment->invoice->nomor_invoice ?? '-' }}</strong>
+
+                        <input type="hidden" name="jumlah_pembayaran" value="{{ old('jumlah_pembayaran', (int) $payment->jumlah_pembayaran) }}">
+                        <input type="hidden" name="ntb" value="{{ old('ntb', $payment->ntb) }}">
+
+                        <div class="mb-4">
+                            <label for="bukti_pembayaran" class="form-label fw-semibold">Upload Bukti Pembayaran Baru <span class="text-muted">(Opsional)</span></label>
+                            <input type="file" name="bukti_pembayaran" id="bukti_pembayaran" class="form-control @error('bukti_pembayaran') is-invalid @enderror" accept=".pdf,.jpg,.jpeg,.png">
+                            <small class="text-muted">Kosongkan jika tidak ingin mengganti bukti pembayaran.</small>
                         </div>
-                        <div class="col-md-6 mb-2">
-                            <small class="text-muted d-block">Kontrak</small>
-                            <strong>{{ $payment->invoice->pks->nomor ?? '-' }}</strong>
+
+                        <div class="mb-4">
+                            <label for="catatan" class="form-label fw-semibold">Catatan <span class="text-muted">(Opsional)</span></label>
+                            <textarea name="catatan" id="catatan" rows="3" class="form-control @error('catatan') is-invalid @enderror">{{ old('catatan', $payment->catatan) }}</textarea>
                         </div>
-                        <div class="col-md-6 mb-2">
-                            <small class="text-muted d-block">Klien</small>
-                            <strong>{{ $payment->invoice->pks->client->nama ?? '-' }}</strong>
+
+                        <div class="border rounded mb-4">
+                            <button class="btn btn-light w-100 d-flex align-items-center justify-content-between rounded-0 border-0 px-3 py-2"
+                                    type="button"
+                                    data-bs-toggle="collapse"
+                                    data-bs-target="#kwitansiFields"
+                                    aria-expanded="{{ $showKwitansiFields ? 'true' : 'false' }}"
+                                    aria-controls="kwitansiFields">
+                                <span class="fw-semibold">Ubah Penandatangan Kwitansi</span>
+                                <i class="bi bi-chevron-down"></i>
+                            </button>
+
+                            <div class="collapse {{ $showKwitansiFields ? 'show' : '' }}" id="kwitansiFields">
+                                <div class="border-top p-3">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label for="kwitansi_penyetor_nama" class="form-label fw-semibold">Nama Penyetor Kwitansi <span class="text-danger">*</span></label>
+                                            <input type="text"
+                                                   name="kwitansi_penyetor_nama"
+                                                   id="kwitansi_penyetor_nama"
+                                                   class="form-control @error('kwitansi_penyetor_nama') is-invalid @enderror"
+                                                   value="{{ old('kwitansi_penyetor_nama', $payment->kwitansi_penyetor_nama) }}">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label for="kwitansi_penyetor_nip" class="form-label fw-semibold">NIP Penyetor Kwitansi <span class="text-danger">*</span></label>
+                                            <input type="text"
+                                                   name="kwitansi_penyetor_nip"
+                                                   id="kwitansi_penyetor_nip"
+                                                   class="form-control @error('kwitansi_penyetor_nip') is-invalid @enderror"
+                                                   value="{{ old('kwitansi_penyetor_nip', $payment->kwitansi_penyetor_nip) }}"
+                                                   inputmode="numeric"
+                                                   maxlength="18"
+                                                   placeholder="18 digit angka">
+                                        </div>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3 mb-md-0">
+                                            <label for="kwitansi_kepala_stasiun_nama" class="form-label fw-semibold">Nama Kepala Stasiun Kwitansi <span class="text-danger">*</span></label>
+                                            <input type="text"
+                                                   name="kwitansi_kepala_stasiun_nama"
+                                                   id="kwitansi_kepala_stasiun_nama"
+                                                   class="form-control @error('kwitansi_kepala_stasiun_nama') is-invalid @enderror"
+                                                   value="{{ old('kwitansi_kepala_stasiun_nama', $payment->kwitansi_kepala_stasiun_nama) }}">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="kwitansi_kepala_stasiun_nip" class="form-label fw-semibold">NIP Kepala Stasiun Kwitansi <span class="text-danger">*</span></label>
+                                            <input type="text"
+                                                   name="kwitansi_kepala_stasiun_nip"
+                                                   id="kwitansi_kepala_stasiun_nip"
+                                                   class="form-control @error('kwitansi_kepala_stasiun_nip') is-invalid @enderror"
+                                                   value="{{ old('kwitansi_kepala_stasiun_nip', $payment->kwitansi_kepala_stasiun_nip) }}"
+                                                   inputmode="numeric"
+                                                   maxlength="18"
+                                                   placeholder="18 digit angka">
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="col-md-6">
-                            <small class="text-muted d-block">Nominal Invoice</small>
-                            <strong class="text-primary">Rp {{ number_format($payment->invoice->nominal ?? 0, 0, ',', '.') }}</strong>
+
+                        <div class="d-flex justify-content-end gap-2 border-top pt-3">
+                            <a href="{{ route('payment.index') }}" class="btn btn-light border">Batal</a>
+                            <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
                         </div>
                     </div>
                 </div>
+            </div>
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="tanggal_pembayaran" class="form-label fw-semibold">Tanggal Pembayaran <span class="text-danger">*</span></label>
-                        <input type="date" name="tanggal_pembayaran" id="tanggal_pembayaran" class="form-control @error('tanggal_pembayaran') is-invalid @enderror" value="{{ old('tanggal_pembayaran', $payment->tanggal_pembayaran->format('Y-m-d')) }}" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="jumlah_pembayaran" class="form-label fw-semibold">Jumlah Pembayaran <span class="text-danger">*</span></label>
-                        <input type="number" name="jumlah_pembayaran" id="jumlah_pembayaran" class="form-control @error('jumlah_pembayaran') is-invalid @enderror" min="1" value="{{ old('jumlah_pembayaran', (int) $payment->jumlah_pembayaran) }}" required>
-                        <small class="text-muted">Jumlah pembayaran harus sama dengan nominal invoice.</small>
-                    </div>
-                </div>
+            <div class="col-lg-5">
+                <div class="card shadow-sm border-0 position-sticky" style="top: 92px;">
+                    <div class="card-body p-4">
+                        <div class="d-flex align-items-center gap-3 border-bottom pb-3 mb-3">
+                            <span class="d-inline-flex align-items-center justify-content-center rounded bg-primary bg-opacity-10 text-primary flex-shrink-0" style="width: 42px; height: 42px;">
+                                <i class="bi bi-receipt fs-5"></i>
+                            </span>
+                            <div>
+                                <h6 class="fw-semibold mb-1">Ringkasan Pembayaran</h6>
+                                <small class="text-muted">Detail invoice dan pembayaran.</small>
+                            </div>
+                        </div>
 
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="kode_billing" class="form-label fw-semibold">Kode Billing</label>
-                        <input type="text" name="kode_billing" id="kode_billing" class="form-control @error('kode_billing') is-invalid @enderror" value="{{ old('kode_billing', $payment->kode_billing) }}">
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="ntpn" class="form-label fw-semibold">NTPN</label>
-                        <input type="text" name="ntpn" id="ntpn" class="form-control @error('ntpn') is-invalid @enderror" value="{{ old('ntpn', $payment->ntpn) }}">
-                    </div>
-                </div>
+                        <div class="row g-3">
+                            <div class="col-12">
+                                <small class="text-muted d-block mb-1">Nomor Pembayaran</small>
+                                <div class="fw-semibold text-dark text-break">{{ $payment->nomor_pembayaran ?? '-' }}</div>
+                            </div>
+                            <div class="col-12">
+                                <small class="text-muted d-block mb-1">Invoice</small>
+                                <div class="fw-semibold text-dark text-break">{{ $payment->invoice->nomor_invoice ?? '-' }}</div>
+                            </div>
+                            <div class="col-12">
+                                <small class="text-muted d-block mb-1">Kontrak</small>
+                                <div class="fw-semibold text-dark text-break">{{ $payment->invoice->pks->nomor ?? '-' }}</div>
+                            </div>
+                            <div class="col-12">
+                                <small class="text-muted d-block mb-1">Klien</small>
+                                <div class="fw-semibold text-dark text-break">{{ $payment->invoice->pks->client->nama ?? '-' }}</div>
+                            </div>
+                            <div class="col-12">
+                                <small class="text-muted d-block mb-1">Kode Billing Invoice</small>
+                                <code class="d-inline-block fw-semibold text-dark text-break">{{ $payment->invoice->kode_billing ?? $payment->kode_billing ?? '-' }}</code>
+                            </div>
+                        </div>
 
-                <div class="mb-3">
-                    <label for="catatan" class="form-label fw-semibold">Catatan</label>
-                    <textarea name="catatan" id="catatan" rows="3" class="form-control @error('catatan') is-invalid @enderror">{{ old('catatan', $payment->catatan) }}</textarea>
-                </div>
-
-                <div class="mb-4">
-                    <label for="bukti_pembayaran" class="form-label fw-semibold">Upload Bukti Pembayaran Baru <span class="text-muted">(Opsional)</span></label>
-                    <input type="file" name="bukti_pembayaran" id="bukti_pembayaran" class="form-control @error('bukti_pembayaran') is-invalid @enderror" accept=".pdf,.jpg,.jpeg,.png">
-                    <small class="text-muted">Kosongkan jika tidak ingin mengganti bukti pembayaran.</small>
-                </div>
-
-                <h6 class="fw-semibold mb-3">Penandatangan Kwitansi</h6>
-                <div class="row">
-                    <div class="col-md-6 mb-3">
-                        <label for="kwitansi_penyetor_nama" class="form-label fw-semibold">Nama Penyetor Kwitansi <span class="text-danger">*</span></label>
-                        <input type="text" name="kwitansi_penyetor_nama" id="kwitansi_penyetor_nama" class="form-control @error('kwitansi_penyetor_nama') is-invalid @enderror" value="{{ old('kwitansi_penyetor_nama', $payment->kwitansi_penyetor_nama) }}" required>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="kwitansi_penyetor_nip" class="form-label fw-semibold">NIP Penyetor Kwitansi <span class="text-danger">*</span></label>
-                        <input type="text" name="kwitansi_penyetor_nip" id="kwitansi_penyetor_nip" class="form-control @error('kwitansi_penyetor_nip') is-invalid @enderror" value="{{ old('kwitansi_penyetor_nip', $payment->kwitansi_penyetor_nip) }}" inputmode="numeric" pattern="[0-9]{18}" minlength="18" maxlength="18" placeholder="18 digit angka" required>
+                        <div class="row g-2 mt-3">
+                            <div class="col-md-6 col-lg-12 col-xl-6">
+                                <div class="h-100 bg-light border rounded p-3">
+                                    <small class="text-muted d-block mb-1">Nominal Invoice</small>
+                                    <div class="fw-bold text-dark">Rp {{ number_format($payment->invoice->nominal ?? $payment->jumlah_pembayaran ?? 0, 0, ',', '.') }}</div>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-12 col-xl-6">
+                                <div class="h-100 bg-light border border-primary-subtle rounded p-3">
+                                    <small class="text-muted d-block mb-1">Jumlah Dibayar</small>
+                                    <div class="fw-bold text-primary">Rp {{ number_format($payment->jumlah_pembayaran ?? 0, 0, ',', '.') }}</div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="row mb-4">
-                    <div class="col-md-6 mb-3 mb-md-0">
-                        <label for="kwitansi_kepala_stasiun_nama" class="form-label fw-semibold">Nama Kepala Stasiun Kwitansi <span class="text-danger">*</span></label>
-                        <input type="text" name="kwitansi_kepala_stasiun_nama" id="kwitansi_kepala_stasiun_nama" class="form-control @error('kwitansi_kepala_stasiun_nama') is-invalid @enderror" value="{{ old('kwitansi_kepala_stasiun_nama', $payment->kwitansi_kepala_stasiun_nama) }}" required>
-                    </div>
-                    <div class="col-md-6">
-                        <label for="kwitansi_kepala_stasiun_nip" class="form-label fw-semibold">NIP Kepala Stasiun Kwitansi <span class="text-danger">*</span></label>
-                        <input type="text" name="kwitansi_kepala_stasiun_nip" id="kwitansi_kepala_stasiun_nip" class="form-control @error('kwitansi_kepala_stasiun_nip') is-invalid @enderror" value="{{ old('kwitansi_kepala_stasiun_nip', $payment->kwitansi_kepala_stasiun_nip) }}" inputmode="numeric" pattern="[0-9]{18}" minlength="18" maxlength="18" placeholder="18 digit angka" required>
-                    </div>
-                </div>
-
-                <div class="d-flex justify-content-end gap-2 border-top pt-3">
-                    <a href="{{ route('payment.index') }}" class="btn btn-light border">Batal</a>
-                    <button type="submit" class="btn btn-primary">Simpan Perubahan</button>
-                </div>
-            </form>
+            </div>
         </div>
-    </div>
+    </form>
 </div>
 @endsection

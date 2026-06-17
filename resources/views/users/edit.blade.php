@@ -48,12 +48,19 @@
                     <label for="role" class="form-label fw-semibold">Role <span class="text-danger">*</span></label>
                     <select name="role" id="role" class="form-select @error('role') is-invalid @enderror" required>
                         @foreach($roles as $value => $label)
-                            <option value="{{ $value }}" {{ old('role', $user->role) === $value ? 'selected' : '' }}>{{ $label }}</option>
+                            <option value="{{ $value }}" {{ old('role', $user->normalizedRole()) === $value ? 'selected' : '' }} {{ $value === 'kepala_stasiun' && $kepalaStasiunTakenByOther ? 'disabled' : '' }}>
+                                {{ $label }}{{ $value === 'kepala_stasiun' && $kepalaStasiunTakenByOther ? ' (sudah ada)' : '' }}
+                            </option>
                         @endforeach
                     </select>
                     @error('role')
                         <div class="invalid-feedback">{{ $message }}</div>
                     @enderror
+                    @if($user->isKepsta())
+                        <div class="form-text">Akun Kepala Stasiun tidak bisa dihapus. Jika pejabat berganti, ubah data akun ini.</div>
+                    @elseif($kepalaStasiunTakenByOther)
+                        <div class="form-text">Role Kepala Stasiun hanya boleh dimiliki satu akun.</div>
+                    @endif
                 </div>
 
                 <div class="alert alert-info py-2">

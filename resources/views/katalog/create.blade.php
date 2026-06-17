@@ -2,10 +2,10 @@
 
 @section('content')
 
-<div class="container-fluid">
+<div class="container-fluid mx-auto" style="max-width: 800px;">
     <div class="d-flex flex-column flex-md-row justify-content-between gap-3 mb-4">
         <div>
-            <h2 class="mb-1">Tambah Produk</h2>
+            <h2 class="mb-1">Tambah Layanan Katalog</h2>
             <p class="text-muted mb-0">Lengkapi detail layanan dan tarif yang akan masuk ke katalog.</p>
         </div>
         <a href="{{ route('katalog.index') }}" class="btn btn-outline-secondary align-self-start">
@@ -106,9 +106,9 @@
             </div>
 
             <div class="card-footer bg-white d-flex justify-content-end gap-2">
-                <a href="{{ route('katalog.index') }}" class="btn btn-light">Batal</a>
-                <button type="submit" class="btn btn-success">
-                    <i class="bi bi-check-circle me-1"></i> Simpan
+                <a href="{{ route('katalog.index') }}" class="btn btn-light border">Batal</a>
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-save me-1"></i> Simpan Layanan
                 </button>
             </div>
         </div>

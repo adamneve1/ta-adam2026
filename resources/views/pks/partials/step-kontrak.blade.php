@@ -13,7 +13,8 @@
 
     <div class="mb-3">
         <label class="form-label">Tanggal</label>
-        <input type="date" name="tanggal" x-model="form.tanggal" class="form-control">
+        <input type="date" name="tanggal" x-model="form.tanggal" class="form-control" :disabled="isLocked">
+        <div class="form-text" x-show="isLocked">Tanggal dikunci karena PKS sudah memiliki invoice.</div>
     </div>
 
     <div class="mb-3">
@@ -21,5 +22,5 @@
         <textarea name="deskripsi" x-model="form.deskripsi" class="form-control" rows="4"></textarea>
     </div>
 
-    <button type="button" class="btn btn-primary" @click="nextStep()">Next</button>
+    <button type="button" class="btn btn-primary" @click="nextStep()">Lanjut</button>
 </div>

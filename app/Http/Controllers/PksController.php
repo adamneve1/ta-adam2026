@@ -7,8 +7,10 @@ use App\Models\Katalog;
 use App\Models\Pks;
 use App\Models\PksItem;
 use App\Models\Client;
+use App\Models\Invoice;
 use App\Models\Tarif;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Carbon\Carbon;
 
 class PksController extends Controller
 {
@@ -16,9 +18,21 @@ class PksController extends Controller
 
 public function index(Request $request)
 {
-    $pks = Pks::with('client')
-        ->withCount('invoices')
-        ->withSum('invoices as total_ditagihkan', 'nominal')
+    $statusOptions = [
+        'no_invoice' => 'Belum Invoice',
+        'belum_billing' => 'Billing Belum Dibuat',
+        'menunggu_pembayaran' => 'Menunggu Pembayaran',
+        'overdue' => 'Lewat Tempo',
+        'paid' => 'Lunas',
+    ];
+    $today = Carbon::today();
+
+    $pks = Pks::with([
+            'client',
+            'invoices' => function ($query) {
+                $query->latest();
+            },
+        ])
         ->when($request->filled('keyword'), function ($query) use ($request) {
             $keyword = $request->keyword;
             $query->where(function ($q) use ($keyword) {
@@ -33,12 +47,44 @@ public function index(Request $request)
         ->when($request->filled('tanggal'), function ($query) use ($request) {
             $query->whereDate('tanggal', $request->tanggal);
         })
+        ->when($request->filled('status') && array_key_exists($request->status, $statusOptions), function ($query) use ($request, $today) {
+            if ($request->status === 'no_invoice') {
+                $query->doesntHave('invoices');
+                return;
+            }
+
+            $query->whereHas('invoices', function ($invoiceQuery) use ($request, $today) {
+                if ($request->status === 'paid') {
+                    $invoiceQuery->where('status', Invoice::STATUS_PAID);
+                    return;
+                }
+
+                $invoiceQuery->where('status', '!=', Invoice::STATUS_PAID);
+
+                if ($request->status === 'overdue') {
+                    $invoiceQuery->whereDate('tanggal_jatuh_tempo', '<', $today);
+                    return;
+                }
+
+                if ($request->status === 'belum_billing') {
+                    $invoiceQuery->where(function ($q) {
+                        $q->whereNull('kode_billing')
+                            ->orWhere('kode_billing', '');
+                    });
+                    return;
+                }
+
+                $invoiceQuery->whereNotNull('kode_billing')
+                    ->where('kode_billing', '!=', '')
+                    ->whereDate('tanggal_jatuh_tempo', '>=', $today);
+            });
+        })
         ->orderByDesc('tanggal')
         ->latest()
         ->paginate(10)
         ->withQueryString();
 
-    return view('pks.index', compact('pks'));
+    return view('pks.index', compact('pks', 'statusOptions'));
 }
 public function create()
 {
@@ -161,22 +207,35 @@ $number = str_pad($urut, 4, '0', STR_PAD_LEFT)
     
     $pks->update(['total' => $total]);
 
-    return redirect()->route('pks.cetak', $pks->id)->with('success', 'PKS berhasil dibuat');
+    return redirect()->route('pks.index')->with('success', 'PKS berhasil dibuat');
 }
 
 public function edit($id)
 {
-    $pks = Pks::with('items', 'client')->findOrFail($id);
+    $pks = Pks::with('items', 'client')->withCount('invoices')->findOrFail($id);
     $katalogs = Katalog::all();
     $clients = Client::all();
     $tarifs = Tarif::all();
+    $isPksLocked = $pks->invoices_count > 0;
 
-    return view('pks.edit', compact('pks', 'katalogs', 'clients', 'tarifs'));
+    return view('pks.edit', compact('pks', 'katalogs', 'clients', 'tarifs', 'isPksLocked'));
 }
 
 public function update(Request $request, $id)
 {
-    $pks = Pks::findOrFail($id);
+    $pks = Pks::withCount('invoices')->findOrFail($id);
+
+    if ($pks->invoices_count > 0) {
+        $validated = $request->validate([
+            'judul' => 'required',
+            'nomor_referensi' => 'nullable|string|max:255',
+            'deskripsi' => 'nullable|string',
+        ]);
+
+        $pks->update($validated);
+
+        return redirect()->route('pks.index')->with('success', 'PKS berhasil diperbarui. Item, client, tanggal, dan total tidak diubah karena PKS sudah memiliki invoice.');
+    }
 
     // VALIDASI
     $request->validate([
@@ -278,11 +337,9 @@ public function update(Request $request, $id)
 public function destroy($id)
 {
     $pks = Pks::findOrFail($id);
-    
-    // Cek apakah ada invoice terkait
-    $hasInvoice = \App\Models\Invoice::where('pks_id', $pks->id)->exists();
-    if($hasInvoice) {
-        return back()->with('error', 'Gagal menghapus! PKS ini sudah memiliki Invoice.');
+
+    if ($pks->invoices()->exists()) {
+        return back()->with('error', 'PKS tidak bisa dihapus karena sudah memiliki invoice.');
     }
 
     $pks->items()->delete();
@@ -300,9 +357,14 @@ public function preview(Request $request)
     $items = $payload['items'] ?? [];
     $client = $payload['client'] ?? [];
 
-    $mappedItems = collect($items)->map(function ($item) {
+    $katalogNames = Katalog::whereIn('id', collect($items)->pluck('katalog_id')->filter()->unique())
+        ->pluck('nama_layanan', 'id');
+
+    $mappedItems = collect($items)->map(function ($item) use ($katalogNames) {
+        $katalogId = $item['katalog_id'] ?? null;
+
         return (object) [
-            'katalog_id' => $item['katalog_id'] ?? null,
+            'katalog_id' => $katalogId,
             'waktu' => $item['waktu'] ?? null,
             'channel' => $item['channel'] ?? null,
             'tanggal_mulai' => $item['tanggal_mulai'] ?? null,
@@ -310,7 +372,9 @@ public function preview(Request $request)
             'qty' => (int) ($item['qty'] ?? 0),
             'tarif' => (int) ($item['tarif'] ?? 0),
             'subtotal' => (int) ($item['subtotal'] ?? 0),
-            'katalog' => null,
+            'katalog' => (object) [
+                'nama_layanan' => $katalogNames[$katalogId] ?? 'Jasa Penyiaran',
+            ],
         ];
     });
 

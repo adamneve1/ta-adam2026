@@ -3,13 +3,13 @@
 @section('title', 'Pengaturan Profil - PNBP RRI')
 
 @section('content')
-<div class="container-fluid">
+<div class="container-fluid" style="max-width: 1200px;">
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-3 mb-4">
         <div>
             <h3 class="mb-1 text-dark">Pengaturan Profil</h3>
             <p class="text-muted mb-0">Kelola informasi akun dan password yang digunakan untuk masuk aplikasi.</p>
         </div>
-        <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary">
+        <a href="{{ route('dashboard') }}" class="btn btn-outline-secondary d-inline-flex align-items-center">
             <i class="bi bi-arrow-left me-1"></i> Kembali
         </a>
     </div>
@@ -28,48 +28,55 @@
         </div>
     @endif
 
-    <div class="row">
-        <div class="col-lg-8 col-xl-7">
+    <div class="row g-4 align-items-start">
+        <div class="col-lg-8">
             <div class="card shadow-sm border-0 mb-4">
-                <div class="card-header bg-white py-3">
-                    <h5 class="mb-0">
-                        <i class="bi bi-person-lines-fill text-primary me-2"></i>
-                        Informasi Profil
-                    </h5>
+                <div class="card-header bg-white border-0 pb-0">
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="d-inline-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded" style="width: 42px; height: 42px;">
+                            <i class="bi bi-person-lines-fill fs-5"></i>
+                        </span>
+                        <div>
+                            <h5 class="mb-1">Informasi Profil</h5>
+                            <p class="text-muted small mb-0">Nama, email, dan NIP akun login.</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
+                <div class="card-body pt-4">
                     <form method="POST" action="{{ route('profile.update') }}">
                         @csrf
                         @method('PATCH')
 
-                        <div class="mb-3">
-                            <label for="name" class="form-label fw-semibold">Nama</label>
-                            <input type="text"
-                                   name="name"
-                                   id="name"
-                                   class="form-control @error('name') is-invalid @enderror"
-                                   value="{{ old('name', $user->name) }}"
-                                   required
-                                   autofocus>
-                            @error('name')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="name" class="form-label fw-semibold">Nama <span class="text-danger">*</span></label>
+                                <input type="text"
+                                       name="name"
+                                       id="name"
+                                       class="form-control @error('name') is-invalid @enderror"
+                                       value="{{ old('name', $user->name) }}"
+                                       required
+                                       autofocus>
+                                @error('name')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="email" class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
+                                <input type="email"
+                                       name="email"
+                                       id="email"
+                                       class="form-control @error('email') is-invalid @enderror"
+                                       value="{{ old('email', $user->email) }}"
+                                       required>
+                                @error('email')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="email" class="form-label fw-semibold">Email</label>
-                            <input type="email"
-                                   name="email"
-                                   id="email"
-                                   class="form-control @error('email') is-invalid @enderror"
-                                   value="{{ old('email', $user->email) }}"
-                                   required>
-                            @error('email')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
-                        </div>
-
-                        <div class="mb-3">
+                        <div class="mt-3">
                             <label for="nip" class="form-label fw-semibold">NIP</label>
                             <input type="text"
                                    name="nip"
@@ -87,7 +94,7 @@
                         </div>
 
                         @if ($user instanceof \Illuminate\Contracts\Auth\MustVerifyEmail && ! $user->hasVerifiedEmail())
-                            <div class="alert alert-warning py-2">
+                            <div class="alert alert-warning py-2 mt-3 mb-0">
                                 Email belum diverifikasi.
                                 <button form="send-verification" class="btn btn-link btn-sm p-0 align-baseline">
                                     Kirim ulang email verifikasi
@@ -95,8 +102,8 @@
                             </div>
                         @endif
 
-                        <div class="d-flex justify-content-end">
-                            <button type="submit" class="btn btn-primary">
+                        <div class="d-flex justify-content-end mt-4">
+                            <button type="submit" class="btn btn-primary d-inline-flex align-items-center">
                                 <i class="bi bi-save me-1"></i> Simpan Profil
                             </button>
                         </div>
@@ -109,13 +116,18 @@
             </div>
 
             <div class="card shadow-sm border-0 mb-4">
-                <div class="card-header bg-white py-3">
-                    <h5 class="mb-0">
-                        <i class="bi bi-shield-lock text-primary me-2"></i>
-                        Ubah Password
-                    </h5>
+                <div class="card-header bg-white border-0 pb-0">
+                    <div class="d-flex align-items-center gap-3">
+                        <span class="d-inline-flex align-items-center justify-content-center bg-primary-subtle text-primary rounded" style="width: 42px; height: 42px;">
+                            <i class="bi bi-shield-lock fs-5"></i>
+                        </span>
+                        <div>
+                            <h5 class="mb-1">Ubah Password</h5>
+                            <p class="text-muted small mb-0">Gunakan password baru minimal 8 karakter.</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
+                <div class="card-body pt-4">
                     <form method="POST" action="{{ route('password.update') }}">
                         @csrf
                         @method('PUT')
@@ -132,29 +144,31 @@
                             @enderror
                         </div>
 
-                        <div class="mb-3">
-                            <label for="update_password_password" class="form-label fw-semibold">Password Baru</label>
-                            <input type="password"
-                                   name="password"
-                                   id="update_password_password"
-                                   class="form-control @error('password', 'updatePassword') is-invalid @enderror"
-                                   autocomplete="new-password">
-                            @error('password', 'updatePassword')
-                                <div class="invalid-feedback">{{ $message }}</div>
-                            @enderror
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="update_password_password" class="form-label fw-semibold">Password Baru</label>
+                                <input type="password"
+                                       name="password"
+                                       id="update_password_password"
+                                       class="form-control @error('password', 'updatePassword') is-invalid @enderror"
+                                       autocomplete="new-password">
+                                @error('password', 'updatePassword')
+                                    <div class="invalid-feedback">{{ $message }}</div>
+                                @enderror
+                            </div>
+
+                            <div class="col-md-6">
+                                <label for="update_password_password_confirmation" class="form-label fw-semibold">Konfirmasi Password Baru</label>
+                                <input type="password"
+                                       name="password_confirmation"
+                                       id="update_password_password_confirmation"
+                                       class="form-control"
+                                       autocomplete="new-password">
+                            </div>
                         </div>
 
-                        <div class="mb-3">
-                            <label for="update_password_password_confirmation" class="form-label fw-semibold">Konfirmasi Password Baru</label>
-                            <input type="password"
-                                   name="password_confirmation"
-                                   id="update_password_password_confirmation"
-                                   class="form-control"
-                                   autocomplete="new-password">
-                        </div>
-
-                        <div class="d-flex justify-content-end">
-                            <button type="submit" class="btn btn-primary">
+                        <div class="d-flex justify-content-end mt-4">
+                            <button type="submit" class="btn btn-primary d-inline-flex align-items-center">
                                 <i class="bi bi-key me-1"></i> Simpan Password
                             </button>
                         </div>
@@ -164,22 +178,55 @@
 
             @if(auth()->user()->isLpu())
                 <div class="card shadow-sm border-0">
-                    <div class="card-header bg-white py-3">
-                        <h5 class="mb-0 text-danger">
-                            <i class="bi bi-exclamation-triangle me-2"></i>
-                            Hapus Akun
-                        </h5>
+                    <div class="card-header bg-white border-0 pb-0">
+                        <div class="d-flex align-items-center gap-3">
+                            <span class="d-inline-flex align-items-center justify-content-center bg-danger-subtle text-danger rounded" style="width: 42px; height: 42px;">
+                                <i class="bi bi-exclamation-triangle fs-5"></i>
+                            </span>
+                            <div>
+                                <h5 class="mb-1 text-danger">Hapus Akun</h5>
+                                <p class="text-muted small mb-0">Aksi ini hanya tersedia untuk role LPU.</p>
+                            </div>
+                        </div>
                     </div>
-                    <div class="card-body">
-                        <p class="text-muted small mb-3">
-                            Akun yang dihapus tidak bisa digunakan lagi untuk masuk ke aplikasi.
-                        </p>
-                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteProfileModal">
+                    <div class="card-body pt-4">
+                        <button type="button" class="btn btn-outline-danger d-inline-flex align-items-center" data-bs-toggle="modal" data-bs-target="#deleteProfileModal">
                             <i class="bi bi-trash me-1"></i> Hapus Akun Saya
                         </button>
                     </div>
                 </div>
             @endif
+        </div>
+
+        <div class="col-lg-4">
+            <div class="card shadow-sm border-0 position-sticky" style="top: 90px;">
+                <div class="card-body">
+                    <div class="d-flex align-items-center gap-3 mb-4">
+                        <div class="d-flex align-items-center justify-content-center bg-primary text-white rounded-circle fw-bold shadow-sm" style="width: 56px; height: 56px; font-size: 22px;">
+                            {{ strtoupper(substr($user->name, 0, 1)) }}
+                        </div>
+                        <div class="min-w-0">
+                            <h5 class="mb-1 text-truncate">{{ $user->name }}</h5>
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">{{ $user->roleLabel() }}</span>
+                        </div>
+                    </div>
+
+                    <div class="border rounded p-3 bg-light-subtle mb-3">
+                        <div class="text-muted small mb-1">Email Login</div>
+                        <div class="fw-semibold text-break">{{ $user->email }}</div>
+                    </div>
+
+                    <div class="border rounded p-3 bg-light-subtle mb-3">
+                        <div class="text-muted small mb-1">NIP</div>
+                        <div class="fw-semibold">{{ $user->nip ?: '-' }}</div>
+                    </div>
+
+                    <div class="border rounded p-3 bg-light-subtle">
+                        <div class="text-muted small mb-1">Terdaftar</div>
+                        <div class="fw-semibold">{{ $user->created_at?->format('d M Y') ?? '-' }}</div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </div>

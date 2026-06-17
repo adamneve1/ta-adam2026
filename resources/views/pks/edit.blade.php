@@ -6,7 +6,7 @@
 <!-- Mencegah form berkedip saat loading Alpine -->
 <style> [x-cloak] { display: none !important; } </style>
 
-<div class="container" x-data="pksForm()" x-cloak>
+<div class="container-fluid mx-auto" style="max-width: 1200px;" x-data="pksForm()" x-cloak>
     <div class="toast-container position-fixed top-0 end-0 p-3">
         <div id="validationToast" class="toast text-bg-danger border-0" role="alert">
             <div class="d-flex">
@@ -16,7 +16,7 @@
         </div>
     </div>
 
-    <div class="card shadow-sm">
+    <div class="card border-0 shadow-sm">
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
@@ -43,10 +43,17 @@
                 </div>
             @endif
 
+            @if($isPksLocked)
+                <div class="alert alert-warning">
+                    <strong>PKS sudah memiliki invoice.</strong>
+                    Perubahan item, client, tanggal, dan total dikunci supaya nominal invoice tetap sinkron. Field administratif seperti judul, nomor referensi, dan deskripsi masih bisa diperbarui.
+                </div>
+            @endif
+
             <!-- Progress Bar -->
             <div class="mb-4">
                 <div class="progress" style="height: 1.25rem;">
-                    <div class="progress-bar bg-success" :style="`width: ${(step / totalSteps) * 100}%`" x-text="`Step ${step} dari ${totalSteps}`"></div>
+                    <div class="progress-bar bg-primary" :style="`width: ${(step / totalSteps) * 100}%`" x-text="`Step ${step} dari ${totalSteps}`"></div>
                 </div>
             </div>
 
@@ -69,6 +76,7 @@ document.addEventListener('alpine:init', () => {
         step: 1,
         totalSteps: 4,
         toastMessage: '',
+        isLocked: @json($isPksLocked),
         clientMode: @json(old('client_mode', old('client_id', $pks->client_id) ? 'registered' : 'new')),
 
         // Data dari Laravel DB
@@ -125,6 +133,10 @@ document.addEventListener('alpine:init', () => {
         },
 
         addItem() {
+            if (this.isLocked) {
+                return;
+            }
+
             this.items.push({
                 id: Date.now() + Math.random(),
                 katalog_id: '',
@@ -139,6 +151,10 @@ document.addEventListener('alpine:init', () => {
         },
 
         removeItem(index) {
+            if (this.isLocked) {
+                return;
+            }
+
             this.items.splice(index, 1);
         },
 
@@ -202,7 +218,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         getContractEndDate() {
-            return this.addDays(this.getBroadcastEndDate(), 28);
+            return this.addDays(this.getBroadcastEndDate(), 20);
         },
 
         selectedClient() {
@@ -214,6 +230,10 @@ document.addEventListener('alpine:init', () => {
         },
 
         switchClientMode(mode) {
+            if (this.isLocked) {
+                return;
+            }
+
             this.clientMode = mode;
 
             if (mode === 'new') {

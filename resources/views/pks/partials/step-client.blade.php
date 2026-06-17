@@ -2,16 +2,20 @@
     <h5 class="mb-3">Step 2 - Client</h5>
 
     <div class="btn-group mb-4" role="group" aria-label="Mode input client">
-        <input type="radio" class="btn-check" name="client_mode" id="clientModeRegistered" value="registered" x-model="clientMode" @change="switchClientMode('registered')">
+        <input type="radio" class="btn-check" name="client_mode" id="clientModeRegistered" value="registered" x-model="clientMode" @change="switchClientMode('registered')" :disabled="isLocked">
         <label class="btn btn-outline-primary" for="clientModeRegistered">Client Terdaftar</label>
 
-        <input type="radio" class="btn-check" name="client_mode" id="clientModeNew" value="new" x-model="clientMode" @change="switchClientMode('new')">
+        <input type="radio" class="btn-check" name="client_mode" id="clientModeNew" value="new" x-model="clientMode" @change="switchClientMode('new')" :disabled="isLocked">
         <label class="btn btn-outline-primary" for="clientModeNew">Client Baru</label>
+    </div>
+
+    <div class="alert alert-light border py-2 px-3 small" x-show="isLocked">
+        Client dikunci karena PKS sudah memiliki invoice.
     </div>
 
     <div x-show="clientMode === 'registered'" x-transition class="mb-4">
         <label class="form-label">Pilih Client yang sudah terdaftar <span class="text-danger">*</span></label>
-        <select name="client_id" x-model="form.client_id" class="form-select" :disabled="clientMode !== 'registered'">
+        <select name="client_id" x-model="form.client_id" class="form-select" :disabled="clientMode !== 'registered' || isLocked">
             <option value="">-- Pilih Client --</option>
             @foreach($clients as $c)
                 <option value="{{ $c->id }}">{{ $c->nama }}</option>
@@ -54,7 +58,7 @@
         <div class="row mb-3">
             <div class="col-md-6">
                 <label class="form-label">Jenis Klien <span class="text-danger">*</span></label>
-                <select name="client[jenis_klien]" x-model="form.client.jenis_klien" class="form-select" :disabled="clientMode !== 'new'">
+                <select name="client[jenis_klien]" x-model="form.client.jenis_klien" class="form-select" :disabled="clientMode !== 'new' || isLocked">
                     <option value="">-- Pilih --</option>
                     @foreach(['Instansi Pemerintahan','Perusahaan Swasta','BUMN','BUMD','Lembaga','Organisasi Nirlaba','Perorangan'] as $type)
                         <option value="{{ $type }}">{{ $type }}</option>
@@ -63,7 +67,7 @@
             </div>
             <div class="col-md-6">
                 <label class="form-label">Nama Klien <span class="text-danger">*</span></label>
-                <input type="text" name="client[nama]" x-model="form.client.nama" class="form-control" :disabled="clientMode !== 'new'">
+                <input type="text" name="client[nama]" x-model="form.client.nama" class="form-control" :disabled="clientMode !== 'new' || isLocked">
             </div>
         </div>
 
@@ -72,20 +76,20 @@
         <div class="row mb-3">
             <div class="col-md-4">
                 <label class="form-label">Nama <span class="text-danger">*</span></label>
-                <input type="text" name="client[nama_narahubung]" x-model="form.client.nama_narahubung" @input="syncResponsibleFromContact()" class="form-control" :disabled="clientMode !== 'new'">
+                <input type="text" name="client[nama_narahubung]" x-model="form.client.nama_narahubung" @input="syncResponsibleFromContact()" class="form-control" :disabled="clientMode !== 'new' || isLocked">
             </div>
             <div class="col-md-4">
                 <label class="form-label">No HP <span class="text-danger">*</span></label>
-                <input type="text" name="client[no_narahubung]" x-model="form.client.no_narahubung" class="form-control" :disabled="clientMode !== 'new'">
+                <input type="text" name="client[no_narahubung]" x-model="form.client.no_narahubung" class="form-control" :disabled="clientMode !== 'new' || isLocked">
             </div>
             <div class="col-md-4">
                 <label class="form-label">Email <span class="text-danger">*</span></label>
-                <input type="email" name="client[email]" x-model="form.client.email" class="form-control" :disabled="clientMode !== 'new'">
+                <input type="email" name="client[email]" x-model="form.client.email" class="form-control" :disabled="clientMode !== 'new' || isLocked">
             </div>
         </div>
 
         <div class="form-check mb-3">
-            <input type="checkbox" id="sameAsContact" class="form-check-input" x-model="form.client.sameAsContact" @change="copyContact()" :disabled="clientMode !== 'new'">
+            <input type="checkbox" id="sameAsContact" class="form-check-input" x-model="form.client.sameAsContact" @change="copyContact()" :disabled="clientMode !== 'new' || isLocked">
             <label class="form-check-label" for="sameAsContact">Samakan nama penanggung jawab dengan narahubung</label>
         </div>
 
@@ -93,25 +97,25 @@
         <div class="row mb-3">
             <div class="col-md-6">
                 <label class="form-label">Nama PJ <span class="text-danger">*</span></label>
-                <input type="text" name="client[nama_penanggung_jawab]" x-model="form.client.nama_penanggung_jawab" class="form-control" :disabled="clientMode !== 'new'">
+                <input type="text" name="client[nama_penanggung_jawab]" x-model="form.client.nama_penanggung_jawab" class="form-control" :disabled="clientMode !== 'new' || isLocked">
             </div>
             <div class="col-md-6">
                 <label class="form-label">Jabatan <span class="text-danger">*</span></label>
-                <input type="text" name="client[jabatan]" x-model="form.client.jabatan" class="form-control" :disabled="clientMode !== 'new'">
+                <input type="text" name="client[jabatan]" x-model="form.client.jabatan" class="form-control" :disabled="clientMode !== 'new' || isLocked">
             </div>
         </div>
         <div class="mb-3">
             <label class="form-label">Alamat <span class="text-danger">*</span></label>
-            <textarea name="client[alamat]" x-model="form.client.alamat" class="form-control" rows="2" :disabled="clientMode !== 'new'"></textarea>
+            <textarea name="client[alamat]" x-model="form.client.alamat" class="form-control" rows="2" :disabled="clientMode !== 'new' || isLocked"></textarea>
         </div>
         <div class="mb-3">
             <label class="form-label">Catatan</label>
-            <textarea name="client[catatan]" x-model="form.client.catatan" class="form-control" rows="2" :disabled="clientMode !== 'new'"></textarea>
+            <textarea name="client[catatan]" x-model="form.client.catatan" class="form-control" rows="2" :disabled="clientMode !== 'new' || isLocked"></textarea>
         </div>
     </div>
 
     <div class="d-flex justify-content-between">
-        <button type="button" class="btn btn-secondary" @click="step--">Back</button>
-        <button type="button" class="btn btn-primary" @click="nextStep()">Next</button>
+        <button type="button" class="btn btn-light border" @click="step--">Kembali</button>
+        <button type="button" class="btn btn-primary" @click="nextStep()">Lanjut</button>
     </div>
 </div>

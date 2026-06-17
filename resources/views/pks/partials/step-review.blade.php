@@ -18,7 +18,7 @@
     >
     <h5 class="mb-3">Step 4 - Review PKS</h5>
     <div class="alert alert-info py-2 px-3 mb-3">
-        Preview final menggunakan halaman cetak dan akan otomatis terbuka setelah PKS disimpan.
+        Periksa detail PKS sebelum menyimpan. Preview dokumen bisa dibuka lewat tombol di bawah.
     </div>
 
     <div class="border rounded p-3 bg-light">
@@ -44,7 +44,7 @@
                             <span x-text="formatDate(form.tanggal)"></span>
                             <span class="text-muted"> s/d </span>
                             <span x-text="formatDate(getContractEndDate())"></span>
-                            <span class="text-muted small">(akhir penyiaran + 28 hari)</span>
+                            <span class="text-muted small">(akhir penyiaran + 20 hari)</span>
                         </td>
                     </tr>
                 </tbody>
@@ -128,19 +128,19 @@
                                 <span x-text="item.qty || 0"></span>
                                 <span class="text-muted small"> kali</span>
                             </td>
-                            <td class="text-end">Rp <span x-text="formatRp(item.tarif)"></span></td>
-                            <td class="text-end fw-semibold">Rp <span x-text="formatRp(item.subtotal)"></span></td>
+                            <td class="text-end text-nowrap">Rp <span x-text="formatRp(item.tarif)"></span></td>
+                            <td class="text-end fw-semibold text-nowrap">Rp <span x-text="formatRp(item.subtotal)"></span></td>
                         </tr>
                     </template>
                 </tbody>
             </table>
         </div>
         <hr>
-        <p class="mb-0 fs-5"><strong>Total Nilai PKS: Rp <span x-text="formatRp(grandTotal)"></span></strong></p>
+        <p class="mb-0 fs-5 text-nowrap"><strong>Total Nilai PKS: Rp <span x-text="formatRp(grandTotal)"></span></strong></p>
     </div>
 
     <div class="d-flex justify-content-between mt-4">
-        <button type="button" class="btn btn-secondary" @click="step--">Back</button>
+        <button type="button" class="btn btn-light border" @click="step--">Kembali</button>
         <div class="d-flex gap-2">
             <button
                 type="button"
@@ -149,7 +149,9 @@
             >
                 Preview Dokumen
             </button>
-            <button type="submit" class="btn btn-success">Simpan</button>
+            <button type="submit" class="btn btn-primary">
+                <i class="bi bi-save me-1"></i> Simpan PKS
+            </button>
         </div>
     </div>
 </div>

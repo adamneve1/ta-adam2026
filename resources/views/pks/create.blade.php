@@ -6,7 +6,7 @@
 <!-- Mencegah form berkedip saat loading Alpine -->
 <style> [x-cloak] { display: none !important; } </style>
 
-<div class="container" x-data="pksForm()" x-cloak>
+<div class="container-fluid mx-auto" style="max-width: 1200px;" x-data="pksForm()" x-cloak>
     <div class="toast-container position-fixed top-0 end-0 p-3">
         <div id="validationToast" class="toast text-bg-danger border-0" role="alert">
             <div class="d-flex">
@@ -16,7 +16,7 @@
         </div>
     </div>
 
-    <div class="card shadow-sm">
+    <div class="card border-0 shadow-sm">
         <div class="card-body">
             <div class="d-flex justify-content-between align-items-center mb-4">
                 <div>
@@ -46,7 +46,7 @@
             <!-- Progress Bar -->
             <div class="mb-4">
                 <div class="progress" style="height: 1.25rem;">
-                    <div class="progress-bar bg-success" :style="`width: ${(step / totalSteps) * 100}%`" x-text="`Step ${step} dari ${totalSteps}`"></div>
+                    <div class="progress-bar bg-primary" :style="`width: ${(step / totalSteps) * 100}%`" x-text="`Step ${step} dari ${totalSteps}`"></div>
                 </div>
             </div>
 
@@ -204,7 +204,7 @@ document.addEventListener('alpine:init', () => {
         },
 
         getContractEndDate() {
-            return this.addDays(this.getBroadcastEndDate(), 28);
+            return this.addDays(this.getBroadcastEndDate(), 20);
         },
 
         selectedClient() {

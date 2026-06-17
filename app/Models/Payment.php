@@ -14,6 +14,7 @@ class Payment extends Model
         'tanggal_pembayaran',
         'kode_billing',
         'ntpn',
+        'ntb',
         'jumlah_pembayaran',
         'catatan',
         'bukti_pembayaran_path',

@@ -58,7 +58,7 @@ h1, h2, h3, h4, h5, h6 {
                 <!-- Kapsul Kalender -->
                 <div class="d-none d-md-flex align-items-center gap-2 px-3 py-2 bg-light border border-light-subtle rounded-pill small text-secondary">
                     <i class="bi bi-calendar3 text-primary"></i>
-                    <span class="fw-medium">{{ now()->translatedFormat('d F Y') }}</span>
+                    <span class="fw-medium">{{ now()->locale('id')->translatedFormat('d F Y') }}</span>
                 </div>
 
                 <!-- Separator Vertikal -->
@@ -74,7 +74,7 @@ h1, h2, h3, h4, h5, h6 {
                             </div>
                             <div class="text-start d-none d-sm-block me-1">
                                 <span class="d-block text-dark fw-bold small" style="line-height: 1.2;">{{ Auth::user()->name }}</span>
-                                <small class="text-muted d-block" style="font-size: 10px; line-height: 1;">{{ Auth::user()->role }}</small>
+                                <small class="text-muted d-block" style="font-size: 10px; line-height: 1;">{{ Auth::user()->roleLabel() }}</small>
                             </div>
                         </button>
                         

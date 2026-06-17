@@ -1,0 +1,247 @@
+@extends('layouts.app')
+
+@section('content')
+@php
+    $rupiah = fn ($value) => 'Rp ' . number_format((float) $value, 0, ',', '.');
+@endphp
+
+<div class="container-fluid">
+    <div class="d-flex flex-column flex-lg-row justify-content-between gap-3 mb-4">
+        <div>
+            <h3 class="mb-1 text-gray-800">Rekapitulasi Kerja Sama PNBP</h3>
+            <p class="text-muted mb-0">Rekap kontrak PKS dan nilai kerja sama berdasarkan periode tertentu.</p>
+        </div>
+
+        <button type="button" class="btn btn-success align-self-start" data-bs-toggle="modal" data-bs-target="#exportPdfModal">
+            <i class="bi bi-file-earmark-pdf me-1"></i> Export PDF
+        </button>
+    </div>
+
+    @if($errors->any())
+        <div class="alert alert-danger alert-dismissible fade show" role="alert">
+            <strong>Periksa kembali input penandatangan.</strong>
+            <ul class="mb-0 mt-2">
+                @foreach($errors->all() as $error)
+                    <li>{{ $error }}</li>
+                @endforeach
+            </ul>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    @endif
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body">
+            <form method="GET" action="{{ route('rekapitulasi.kerja-sama') }}">
+                <div class="row g-2 align-items-end">
+                    <div class="col-12 col-md-4 col-xl-3">
+                        <label for="tanggal_mulai" class="form-label small fw-semibold">Tanggal Mulai</label>
+                        <input
+                            type="date"
+                            id="tanggal_mulai"
+                            name="tanggal_mulai"
+                            class="form-control form-control-sm"
+                            value="{{ $filters['tanggal_mulai'] }}"
+                        >
+                    </div>
+
+                    <div class="col-12 col-md-4 col-xl-3">
+                        <label for="tanggal_selesai" class="form-label small fw-semibold">Tanggal Selesai</label>
+                        <input
+                            type="date"
+                            id="tanggal_selesai"
+                            name="tanggal_selesai"
+                            class="form-control form-control-sm"
+                            value="{{ $filters['tanggal_selesai'] }}"
+                        >
+                    </div>
+
+                    <div class="col-6 col-md-auto">
+                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                            Filter
+                        </button>
+                    </div>
+
+                    <div class="col-6 col-md-auto">
+                        <a href="{{ route('rekapitulasi.kerja-sama') }}" class="btn btn-outline-secondary btn-sm w-100">
+                            Reset
+                        </a>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="row g-3 mb-4">
+        <div class="col-12 col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small fw-semibold text-uppercase">Periode</div>
+                    <div class="fw-bold text-dark">{{ $filters['tanggal_mulai_label'] }}</div>
+                    <div class="small text-muted">sampai {{ $filters['tanggal_selesai_label'] }}</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small fw-semibold text-uppercase">Jumlah PKS</div>
+                    <div class="fs-4 fw-bold text-dark">{{ $pksList->count() }}</div>
+                    <div class="small text-muted">kontrak kerja sama</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-md-4">
+            <div class="card border-0 shadow-sm h-100">
+                <div class="card-body">
+                    <div class="text-muted small fw-semibold text-uppercase">Total Nilai Kerja Sama</div>
+                    <div class="fs-4 fw-bold text-success">{{ $rupiah($totalNilaiKerjaSama) }}</div>
+                    <div class="small text-muted">berdasarkan tanggal PKS</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="px-4 py-3" style="width: 60px;">No</th>
+                            <th class="py-3">Tanggal</th>
+                            <th class="py-3">Nomor PKS</th>
+                            <th class="py-3">Judul Kerja Sama</th>
+                            <th class="py-3">Mitra</th>
+                            <th class="py-3">Layanan</th>
+                            <th class="py-3 text-center">Status Tagihan</th>
+                            <th class="py-3 text-end">Nilai</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @forelse($pksList as $index => $pks)
+                            @php
+                                $invoice = $pks->invoices->first();
+                                $layanan = $pks->items->pluck('katalog.nama_layanan')->filter()->unique()->values();
+                            @endphp
+                            <tr>
+                                <td class="px-4 py-3 text-muted">{{ $index + 1 }}</td>
+                                <td class="py-3">{{ $pks->tanggal->locale('id')->translatedFormat('d M Y') }}</td>
+                                <td class="py-3 fw-semibold">{{ $pks->nomor }}</td>
+                                <td class="py-3">{{ $pks->judul }}</td>
+                                <td class="py-3">{{ $pks->client->nama ?? '-' }}</td>
+                                <td class="py-3">
+                                    {{ $layanan->take(2)->implode(', ') ?: '-' }}
+                                    @if($layanan->count() > 2)
+                                        <small class="text-muted d-block">+{{ $layanan->count() - 2 }} layanan lain</small>
+                                    @endif
+                                </td>
+                                <td class="py-3 text-center">
+                                    @if($invoice)
+                                        <span class="badge {{ $invoice->statusBadgeClass() }}">{{ $invoice->statusLabel() }}</span>
+                                    @else
+                                        <span class="badge bg-secondary text-white">Belum Invoice</span>
+                                    @endif
+                                </td>
+                                <td class="py-3 text-end fw-bold">{{ $rupiah($pks->total) }}</td>
+                            </tr>
+                        @empty
+                            <tr>
+                                <td colspan="8" class="text-center py-5 text-muted">
+                                    Belum ada kerja sama PNBP pada periode ini.
+                                </td>
+                            </tr>
+                        @endforelse
+                    </tbody>
+                    <tfoot class="table-light">
+                        <tr>
+                            <th colspan="7" class="text-end px-4 py-3">Total Nilai Kerja Sama</th>
+                            <th class="text-end py-3">{{ $rupiah($totalNilaiKerjaSama) }}</th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="exportPdfModal" tabindex="-1" aria-labelledby="exportPdfModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-scrollable">
+        <div class="modal-content">
+            <form method="POST" action="{{ route('rekapitulasi.kerja-sama.export') }}" target="_blank">
+                @csrf
+                <input type="hidden" name="tanggal_mulai" value="{{ $filters['tanggal_mulai'] }}">
+                <input type="hidden" name="tanggal_selesai" value="{{ $filters['tanggal_selesai'] }}">
+
+                <div class="modal-header">
+                    <div>
+                        <h5 class="modal-title" id="exportPdfModalLabel">Data Penandatangan PDF</h5>
+                        <small class="text-muted">Periode {{ $filters['tanggal_mulai_label'] }} sampai {{ $filters['tanggal_selesai_label'] }}</small>
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Tutup"></button>
+                </div>
+
+                <div class="modal-body">
+                    <div class="row g-3">
+                        @for($i = 0; $i < 2; $i++)
+                            <div class="col-12 col-md-6">
+                                <div class="border rounded p-3 h-100 bg-light">
+                                    <h6 class="fw-bold mb-3">Penandatangan {{ $i + 1 }}</h6>
+
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-semibold" for="signer_{{ $i }}_posisi">Posisi / Jabatan</label>
+                                        <input
+                                            type="text"
+                                            id="signer_{{ $i }}_posisi"
+                                            name="signers[{{ $i }}][posisi]"
+                                            class="form-control form-control-sm"
+                                            value="{{ old('signers.' . $i . '.posisi') }}"
+                                            placeholder="Contoh: Dibuat oleh / Mengetahui"
+                                            required
+                                        >
+                                    </div>
+
+                                    <div class="mb-3">
+                                        <label class="form-label small fw-semibold" for="signer_{{ $i }}_nama">Nama</label>
+                                        <input
+                                            type="text"
+                                            id="signer_{{ $i }}_nama"
+                                            name="signers[{{ $i }}][nama]"
+                                            class="form-control form-control-sm"
+                                            value="{{ old('signers.' . $i . '.nama') }}"
+                                            placeholder="Nama lengkap"
+                                            required
+                                        >
+                                    </div>
+
+                                    <div class="mb-0">
+                                        <label class="form-label small fw-semibold" for="signer_{{ $i }}_nip">NIP</label>
+                                        <input
+                                            type="text"
+                                            id="signer_{{ $i }}_nip"
+                                            name="signers[{{ $i }}][nip]"
+                                            class="form-control form-control-sm"
+                                            value="{{ old('signers.' . $i . '.nip') }}"
+                                            placeholder="NIP"
+                                            inputmode="numeric"
+                                            required
+                                        >
+                                    </div>
+                                </div>
+                            </div>
+                        @endfor
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-light border" data-bs-dismiss="modal">Batal</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-printer me-1"></i> Cetak PDF
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+@endsection
