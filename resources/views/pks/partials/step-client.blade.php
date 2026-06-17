@@ -1,5 +1,5 @@
 <div x-show="step === 2" x-transition>
-    <h5 class="mb-3">Step 2 - Client</h5>
+                    <h5 class="mb-3">Step 2 - Client</h5>
 
     <div class="btn-group mb-4" role="group" aria-label="Mode input client">
         <input type="radio" class="btn-check" name="client_mode" id="clientModeRegistered" value="registered" x-model="clientMode" @change="switchClientMode('registered')" :disabled="isLocked">
@@ -119,3 +119,12 @@
         <button type="button" class="btn btn-primary" @click="nextStep()">Lanjut</button>
     </div>
 </div>
+                    <div class="mb-4">
+                        <label class="form-label">Pilih Client yang sudah terdaftar</label>
+                        <select name="client_id" x-model="form.client_id" class="form-control">
+                            <option value="">-- Pilih Client --</option>
+                            @foreach($clients as $c)
+                                <option value="{{ $c->id }}">{{ $c->nama }}</option>
+                            @endforeach
+                        </select>
+                    </div>
