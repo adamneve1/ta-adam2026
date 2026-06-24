@@ -152,7 +152,7 @@
                     </div>
 
                     <div class="small text-white-50">
-                        &copy; {{ date('Y') }} PNBP RRI
+                        
                     </div>
                 </div>
             </section>

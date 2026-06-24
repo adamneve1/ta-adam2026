@@ -54,9 +54,9 @@
                 @csrf
 
                 @include('pks.partials.step-kontrak')
-@include('pks.partials.step-client')
-@include('pks.partials.step-items')
-@include('pks.partials.step-review')
+                @include('pks.partials.step-client')
+                @include('pks.partials.step-items')
+                @include('pks.partials.step-review')
             </form>
         </div>
     </div>
