@@ -211,8 +211,11 @@
                                             name="signers[{{ $i }}][nip]"
                                             class="form-control form-control-sm"
                                             value="{{ old('signers.' . $i . '.nip') }}"
-                                            placeholder="NIP"
+                                            placeholder="18 digit angka"
                                             inputmode="numeric"
+                                            pattern="\d{18}"
+                                            maxlength="18"
+                                            oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                                             required
                                         >
                                     </div>

@@ -232,10 +232,17 @@
                                     <input type="text" 
                                            name="kode_billing" 
                                            id="kode_billing_input" 
-                                           class="form-control form-control-sm font-monospace" 
+                                           class="form-control form-control-sm font-monospace @error('kode_billing') is-invalid @enderror" 
                                            value="{{ $invoice->kode_billing }}" 
                                            placeholder="15 Digit Kode Billing" 
+                                           inputmode="numeric"
+                                           pattern="[0-9]{15}"
+                                           maxlength="15"
+                                           oninput="this.value = this.value.replace(/[^0-9]/g, '')"
                                            required>
+                                    @error('kode_billing')
+                                        <div class="invalid-feedback">{{ $message }}</div>
+                                    @enderror
                                 </div>
                                 <button type="submit" class="btn btn-primary btn-sm w-100">
                                     <i class="bi bi-save me-1"></i> Simpan Kode Billing
@@ -291,7 +298,7 @@
                     @elseif($invoice->isMenungguPembayaran())
                         <div class="text-center py-3 bg-warning-subtle text-warning-emphasis border border-warning rounded mb-3">
                             <i class="bi bi-hourglass-split fs-1 d-block mb-2 animate-pulse"></i>
-                            <span class="fw-bold d-block">MENUNGGU PEMBAYARAN</span>
+                            <span class="fw-bold d-block">MENUNGGU INPUT NTPN</span>
                             <small class="text-muted d-block mt-1">Minta mitra membayar via SIMPONI</small>
                         </div>
 

@@ -15,7 +15,7 @@ class InvoiceController extends Controller
     {
         $statusOptions = [
             'belum_billing' => 'Billing Belum Dibuat',
-            'menunggu_pembayaran' => 'Menunggu Pembayaran',
+            'menunggu_pembayaran' => 'Menunggu Input NTPN',
             'overdue' => 'Lewat Tempo',
             'paid' => 'Lunas',
         ];
@@ -90,7 +90,7 @@ class InvoiceController extends Controller
             'nominal' => 'required|numeric|min:1',
             'tanggal_invoice' => 'required|date',
             'tanggal_jatuh_tempo' => 'nullable|date',
-            'kode_billing' => 'nullable|string',
+            'kode_billing' => ['nullable', 'regex:/^\d{15}$/'],
             'penyetor_nama' => 'required|string|max:255',
             'penyetor_nip' => ['required', 'regex:/^\d{18}$/'],
             'kepala_stasiun_nama' => 'required|string|max:255',
@@ -170,7 +170,7 @@ class InvoiceController extends Controller
             'nominal' => 'required|numeric|min:1',
             'tanggal_invoice' => 'required|date',
             'tanggal_jatuh_tempo' => 'nullable|date',
-            'kode_billing' => 'nullable|string',
+            'kode_billing' => ['nullable', 'regex:/^\d{15}$/'],
             'penyetor_nama' => 'required|string|max:255',
             'penyetor_nip' => ['required', 'regex:/^\d{18}$/'],
             'kepala_stasiun_nama' => 'required|string|max:255',
@@ -214,7 +214,7 @@ class InvoiceController extends Controller
     public function updateBilling(Request $request, $id)
     {
         $request->validate([
-            'kode_billing' => 'required|string',
+            'kode_billing' => ['required', 'regex:/^\d{15}$/'],
         ]);
 
         $invoice = Invoice::findOrFail($id);
@@ -322,6 +322,7 @@ class InvoiceController extends Controller
     private function validationMessages(): array
     {
         return [
+            'kode_billing.regex' => 'Kode Billing SIMPONI harus berisi tepat 15 digit angka.',
             'penyetor_nip.regex' => 'NIP penyetor harus berisi tepat 18 digit angka.',
             'kepala_stasiun_nip.regex' => 'NIP kepala stasiun harus berisi tepat 18 digit angka.',
         ];

@@ -7,7 +7,7 @@
             <i class="bi bi-arrow-left"></i> Kembali ke Daftar Invoice
         </a>
         <h3 class="text-gray-800">Input Pembayaran Invoice</h3>
-        <p class="text-muted">Pilih invoice aktif, data kontrak dan klien akan terisi otomatis.</p>
+        <p class="text-muted mb-0">Pilih invoice aktif, lalu lengkapi data pembayaran di bawah.</p>
     </div>
 
     @if($errors->any())
@@ -29,37 +29,96 @@
                 || $errors->has('kwitansi_kepala_stasiun_nip');
         @endphp
 
-        <div class="row g-4 align-items-start">
-            <div class="col-lg-7">
-                <div class="card shadow-sm border-0">
-                    <div class="card-body p-4">
-                        <div class="mb-4">
-                            <label for="invoice_id" class="form-label fw-semibold">Pilih Invoice <span class="text-danger">*</span></label>
-                            <select name="invoice_id" id="invoice_id" class="form-select @error('invoice_id') is-invalid @enderror" required>
-                                <option value="">-- Pilih Invoice --</option>
+        {{-- ====== STEP 1 : Pilih Invoice ====== --}}
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-primary rounded-circle d-inline-flex align-items-center justify-content-center" style="width:24px;height:24px;font-size:.75rem;">1</span>
+                    <span class="fw-semibold">Pilih Invoice</span>
+                </div>
+                <div style="max-width: 240px;">
+                    <input type="text" id="pickerSearch" class="form-control form-control-sm" placeholder="Cari invoice atau klien...">
+                </div>
+            </div>
+            <div class="card-body p-0">
+                @if($invoices->isEmpty())
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                        Tidak ada invoice yang tersedia untuk pembayaran.
+                    </div>
+                @else
+                    <div class="picker-table-scroll">
+                        <table class="table align-middle mb-0 picker-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:46px;"></th>
+                                    <th>Nomor Invoice</th>
+                                    <th>Nama Klien</th>
+                                    <th>Nomor Kontrak</th>
+                                    <th class="text-end">Nominal Invoice</th>
+                                    <th class="text-end">Sisa Pembayaran</th>
+                                </tr>
+                            </thead>
+                            <tbody>
                                 @foreach($invoices as $invoice)
                                     @php
                                         $sisaTagihan = (float) $invoice->nominal;
+                                        $isSelected = old('invoice_id', $selectedInvoiceId ?? null) == $invoice->id;
                                     @endphp
-                                    <option value="{{ $invoice->id }}"
-                                        data-nomor-kontrak="{{ $invoice->pks->nomor ?? '-' }}"
-                                        data-judul-kontrak="{{ $invoice->pks->judul ?? '-' }}"
-                                        data-client="{{ $invoice->pks->client->nama ?? '-' }}"
-                                        data-narahubung="{{ $invoice->pks->client->no_narahubung ?? '-' }}"
-                                        data-kode-billing="{{ $invoice->kode_billing ?? '' }}"
-                                        data-jumlah-tagihan="{{ (float) $invoice->nominal }}"
-                                        data-sisa-tagihan="{{ $sisaTagihan }}"
-                                        data-penyetor-nama="{{ $invoice->penyetor_nama ?? '' }}"
-                                        data-penyetor-nip="{{ $invoice->penyetor_nip ?? '' }}"
-                                        data-kepala-stasiun-nama="{{ $invoice->kepala_stasiun_nama ?? '' }}"
-                                        data-kepala-stasiun-nip="{{ $invoice->kepala_stasiun_nip ?? '' }}"
-                                        {{ (old('invoice_id', $selectedInvoiceId ?? null) == $invoice->id) ? 'selected' : '' }}>
-                                        {{ $invoice->nomor_invoice }} - {{ $invoice->pks->client->nama ?? '-' }} (Sisa: Rp {{ number_format($sisaTagihan, 0, ',', '.') }})
-                                    </option>
+                                    <tr class="picker-row {{ $isSelected ? 'active' : '' }}"
+                                        data-search="{{ strtolower($invoice->nomor_invoice . ' ' . ($invoice->pks->client->nama ?? '') . ' ' . ($invoice->pks->nomor ?? '')) }}">
+                                        <td class="text-center ps-3">
+                                            <input class="form-check-input picker-radio"
+                                                   type="radio"
+                                                   name="invoice_id"
+                                                   id="invoice_radio_{{ $invoice->id }}"
+                                                   value="{{ $invoice->id }}"
+                                                   data-nomor-kontrak="{{ $invoice->pks->nomor ?? '-' }}"
+                                                   data-judul-kontrak="{{ $invoice->pks->judul ?? '-' }}"
+                                                   data-client="{{ $invoice->pks->client->nama ?? '-' }}"
+                                                   data-narahubung="{{ $invoice->pks->client->no_narahubung ?? '-' }}"
+                                                   data-kode-billing="{{ $invoice->kode_billing ?? '' }}"
+                                                   data-jumlah-tagihan="{{ (float) $invoice->nominal }}"
+                                                   data-sisa-tagihan="{{ $sisaTagihan }}"
+                                                   data-penyetor-nama="{{ $invoice->penyetor_nama ?? '' }}"
+                                                   data-penyetor-nip="{{ $invoice->penyetor_nip ?? '' }}"
+                                                   data-kepala-stasiun-nama="{{ $invoice->kepala_stasiun_nama ?? '' }}"
+                                                   data-kepala-stasiun-nip="{{ $invoice->kepala_stasiun_nip ?? '' }}"
+                                                   {{ $isSelected ? 'checked' : '' }}
+                                                   required>
+                                        </td>
+                                        <td><span class="fw-semibold">{{ $invoice->nomor_invoice }}</span></td>
+                                        <td>{{ $invoice->pks->client->nama ?? '-' }}</td>
+                                        <td><span class="text-nowrap">{{ $invoice->pks->nomor ?? '-' }}</span></td>
+                                        <td class="text-end text-nowrap">Rp {{ number_format((float) $invoice->nominal, 0, ',', '.') }}</td>
+                                        <td class="text-end text-nowrap pe-3">
+                                            <span class="fw-semibold text-primary">Rp {{ number_format($sisaTagihan, 0, ',', '.') }}</span>
+                                        </td>
+                                    </tr>
                                 @endforeach
-                            </select>
-                        </div>
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+                @error('invoice_id')
+                    <div class="px-3 py-2 border-top bg-danger bg-opacity-10">
+                        <small class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ $message }}</small>
+                    </div>
+                @enderror
+            </div>
+        </div>
 
+        {{-- ====== STEP 2 : Detail Pembayaran + Ringkasan ====== --}}
+        <div class="row g-4 align-items-start">
+            <div class="col-lg-7">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-primary rounded-circle d-inline-flex align-items-center justify-content-center" style="width:24px;height:24px;font-size:.75rem;">2</span>
+                            <span class="fw-semibold">Detail Pembayaran</span>
+                        </div>
+                    </div>
+                    <div class="card-body p-4">
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
                                 <label for="tanggal_pembayaran" class="form-label fw-semibold">Tanggal Pembayaran <span class="text-danger">*</span></label>
@@ -67,7 +126,8 @@
                             </div>
                             <div class="col-md-6">
                                 <label for="ntpn" class="form-label fw-semibold">NTPN <span class="text-danger">*</span></label>
-                                <input type="text" name="ntpn" id="ntpn" class="form-control @error('ntpn') is-invalid @enderror" value="{{ old('ntpn') }}" required>
+                                <input type="text" name="ntpn" id="ntpn" class="form-control @error('ntpn') is-invalid @enderror" value="{{ old('ntpn') }}" required maxlength="16" minlength="16" pattern="[A-Za-z0-9]{16}">
+                                <small class="text-muted">16 karakter alfanumerik (angka dan huruf).</small>
                             </div>
                         </div>
 
@@ -118,8 +178,10 @@
                                                    class="form-control @error('kwitansi_penyetor_nip') is-invalid @enderror"
                                                    value="{{ old('kwitansi_penyetor_nip') }}"
                                                    inputmode="numeric"
+                                                   pattern="\d{18}"
                                                    maxlength="18"
-                                                   placeholder="18 digit angka">
+                                                   placeholder="18 digit angka"
+                                                   oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                                         </div>
                                     </div>
                                     <div class="row">
@@ -139,8 +201,10 @@
                                                    class="form-control @error('kwitansi_kepala_stasiun_nip') is-invalid @enderror"
                                                    value="{{ old('kwitansi_kepala_stasiun_nip') }}"
                                                    inputmode="numeric"
+                                                   pattern="\d{18}"
                                                    maxlength="18"
-                                                   placeholder="18 digit angka">
+                                                   placeholder="18 digit angka"
+                                                   oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                                         </div>
                                     </div>
                                 </div>
@@ -212,9 +276,92 @@
     </form>
 </div>
 
+<style>
+    /* ---- Picker table (shared) ---- */
+    .picker-table-scroll {
+        max-height: 310px;
+        overflow-y: auto;
+        overflow-x: auto;
+    }
+
+    .picker-table {
+        min-width: 700px;
+    }
+
+    .picker-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: #f8f9fa;
+        font-size: .72rem;
+        text-transform: uppercase;
+        color: #6c757d;
+        font-weight: 700;
+        letter-spacing: .02em;
+        white-space: nowrap;
+        border-bottom: 2px solid #e9ecef;
+        padding: .65rem .75rem;
+    }
+
+    .picker-table tbody td {
+        font-size: .85rem;
+        padding: .6rem .75rem;
+        border-bottom: 1px solid #f1f3f5;
+        vertical-align: middle;
+    }
+
+    .picker-table tbody tr {
+        transition: background-color .12s ease, border-color .12s ease;
+        border-left: 3px solid transparent;
+        cursor: pointer;
+    }
+
+    .picker-table tbody tr:hover {
+        background-color: #f5f8ff;
+    }
+
+    .picker-table tbody tr.active {
+        background-color: #e8f0fe;
+        border-left-color: var(--bs-primary, #0d6efd);
+    }
+
+    .picker-table tbody tr.active td {
+        border-bottom-color: #d0def5;
+    }
+
+    .picker-table .form-check-input {
+        width: 1.1em;
+        height: 1.1em;
+        margin: 0;
+        cursor: pointer;
+    }
+
+    .picker-table .form-check-input:checked {
+        background-color: var(--bs-primary, #0d6efd);
+        border-color: var(--bs-primary, #0d6efd);
+    }
+
+    /* Scrollbar styling */
+    .picker-table-scroll::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+    .picker-table-scroll::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .picker-table-scroll::-webkit-scrollbar-thumb {
+        background: #ced4da;
+        border-radius: 3px;
+    }
+    .picker-table-scroll::-webkit-scrollbar-thumb:hover {
+        background: #adb5bd;
+    }
+</style>
+
 <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const select = document.getElementById('invoice_id');
+        const radios = document.querySelectorAll('.picker-radio');
+        const rows = document.querySelectorAll('.picker-row');
         const jumlahPembayaranInput = document.getElementById('jumlah_pembayaran');
         const kwitansiPenyetorNama = document.getElementById('kwitansi_penyetor_nama');
         const kwitansiPenyetorNip = document.getElementById('kwitansi_penyetor_nip');
@@ -233,9 +380,14 @@
             return 'Rp ' + Number(angka || 0).toLocaleString('id-ID');
         }
 
-        function updateInfo() {
-            const option = select.options[select.selectedIndex];
-            if (!option || option.value === '') {
+        function clearRowHighlights() {
+            rows.forEach(function (row) {
+                row.classList.remove('active');
+            });
+        }
+
+        function updateInfo(radio) {
+            if (!radio) {
                 infoNomorKontrak.textContent = '-';
                 infoJudulKontrak.textContent = '-';
                 infoClient.textContent = '-';
@@ -247,51 +399,80 @@
                 return;
             }
 
-            const nomorKontrak = option.getAttribute('data-nomor-kontrak');
-            const judulKontrak = option.getAttribute('data-judul-kontrak');
-            const client = option.getAttribute('data-client');
-            const narahubung = option.getAttribute('data-narahubung');
-            const kodeBilling = option.getAttribute('data-kode-billing');
-            const jumlahTagihan = option.getAttribute('data-jumlah-tagihan');
-            const sisaTagihan = option.getAttribute('data-sisa-tagihan');
-            const penyetorNama = option.getAttribute('data-penyetor-nama');
-            const penyetorNip = option.getAttribute('data-penyetor-nip');
-            const kepalaStasiunNama = option.getAttribute('data-kepala-stasiun-nama');
-            const kepalaStasiunNip = option.getAttribute('data-kepala-stasiun-nip');
+            infoNomorKontrak.textContent = radio.getAttribute('data-nomor-kontrak');
+            infoJudulKontrak.textContent = radio.getAttribute('data-judul-kontrak');
+            infoClient.textContent = radio.getAttribute('data-client');
+            infoNarahubung.textContent = radio.getAttribute('data-narahubung');
+            infoKodeBilling.textContent = radio.getAttribute('data-kode-billing') || '-';
+            infoJumlahTagihan.textContent = rupiah(radio.getAttribute('data-jumlah-tagihan'));
+            infoSisaTagihan.textContent = rupiah(radio.getAttribute('data-sisa-tagihan'));
+            jumlahPembayaranInput.value = radio.getAttribute('data-sisa-tagihan') || '';
 
-            infoNomorKontrak.textContent = nomorKontrak;
-            infoJudulKontrak.textContent = judulKontrak;
-            infoClient.textContent = client;
-            infoNarahubung.textContent = narahubung;
-            infoKodeBilling.textContent = kodeBilling || '-';
-            infoJumlahTagihan.textContent = rupiah(jumlahTagihan);
-            infoSisaTagihan.textContent = rupiah(sisaTagihan);
-            jumlahPembayaranInput.value = sisaTagihan || '';
+            const penyetorNama = radio.getAttribute('data-penyetor-nama');
+            const penyetorNip = radio.getAttribute('data-penyetor-nip');
+            const kepalaStasiunNama = radio.getAttribute('data-kepala-stasiun-nama');
+            const kepalaStasiunNip = radio.getAttribute('data-kepala-stasiun-nip');
 
-            if (!kwitansiPenyetorNama.value) {
-                kwitansiPenyetorNama.value = penyetorNama || '';
-            }
-            if (!kwitansiPenyetorNip.value) {
-                kwitansiPenyetorNip.value = penyetorNip || '';
-            }
-            if (!kwitansiKepalaStasiunNama.value) {
-                kwitansiKepalaStasiunNama.value = kepalaStasiunNama || '';
-            }
-            if (!kwitansiKepalaStasiunNip.value) {
-                kwitansiKepalaStasiunNip.value = kepalaStasiunNip || '';
-            }
+            if (!kwitansiPenyetorNama.value) kwitansiPenyetorNama.value = penyetorNama || '';
+            if (!kwitansiPenyetorNip.value) kwitansiPenyetorNip.value = penyetorNip || '';
+            if (!kwitansiKepalaStasiunNama.value) kwitansiKepalaStasiunNama.value = kepalaStasiunNama || '';
+            if (!kwitansiKepalaStasiunNip.value) kwitansiKepalaStasiunNip.value = kepalaStasiunNip || '';
+
+            clearRowHighlights();
+            radio.closest('tr').classList.add('active');
         }
 
-        select.addEventListener('change', function () {
-            kwitansiPenyetorNama.value = '';
-            kwitansiPenyetorNip.value = '';
-            kwitansiKepalaStasiunNama.value = '';
-            kwitansiKepalaStasiunNip.value = '';
-            updateInfo();
+        // Klik baris = pilih radio
+        rows.forEach(function (row) {
+            row.addEventListener('click', function (e) {
+                if (e.target.tagName === 'INPUT') return;
+                var radio = row.querySelector('.picker-radio');
+                radio.checked = true;
+                radio.dispatchEvent(new Event('change'));
+            });
         });
-        if (select.value) {
-            updateInfo();
+
+        radios.forEach(function (radio) {
+            radio.addEventListener('change', function () {
+                kwitansiPenyetorNama.value = '';
+                kwitansiPenyetorNip.value = '';
+                kwitansiKepalaStasiunNama.value = '';
+                kwitansiKepalaStasiunNip.value = '';
+                updateInfo(this);
+            });
+        });
+
+        // Auto-fill jika radio sudah terpilih (old input / query param)
+        var checkedRadio = document.querySelector('.picker-radio:checked');
+        if (checkedRadio) {
+            updateInfo(checkedRadio);
         }
+
+        // Live search
+        var searchInput = document.getElementById('pickerSearch');
+        if (searchInput) {
+            searchInput.addEventListener('input', function () {
+                var keyword = this.value.toLowerCase().trim();
+                rows.forEach(function (row) {
+                    var text = row.getAttribute('data-search') || '';
+                    row.style.display = text.includes(keyword) ? '' : 'none';
+                });
+            });
+        }
+    });
+</script>
+
+<script>
+    document.getElementById('ntpn').addEventListener('input', function () {
+        this.value = this.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 16);
+    });
+
+    document.getElementById('kwitansi_penyetor_nip').addEventListener('input', function () {
+        this.value = this.value.replace(/\D/g, '').slice(0, 18);
+    });
+
+    document.getElementById('kwitansi_kepala_stasiun_nip').addEventListener('input', function () {
+        this.value = this.value.replace(/\D/g, '').slice(0, 18);
     });
 </script>
 @endsection

@@ -298,6 +298,7 @@ class PaymentController extends Controller
     {
         return [
             'ntpn.required' => 'NTPN wajib diisi untuk mengonfirmasi pembayaran.',
+            'ntpn.regex' => 'NTPN harus terdiri dari tepat 16 karakter alfanumerik (angka dan huruf).',
             'kwitansi_penyetor_nip.regex' => 'NIP penyetor kwitansi harus berisi tepat 18 digit angka.',
             'kwitansi_kepala_stasiun_nip.regex' => 'NIP kepala stasiun kwitansi harus berisi tepat 18 digit angka.',
         ];
@@ -307,7 +308,7 @@ class PaymentController extends Controller
     {
         return $extraRules + [
             'tanggal_pembayaran' => 'required|date',
-            'ntpn' => 'required|string|max:255',
+            'ntpn' => ['required', 'string', 'regex:/^[A-Za-z0-9]{16}$/'],
             'ntb' => 'nullable|string|max:255',
             'jumlah_pembayaran' => 'required|numeric|min:1',
             'catatan' => 'nullable|string',
@@ -378,6 +379,8 @@ class PaymentController extends Controller
 
             if (!$ntpn) {
                 $errors[] = 'NTPN kosong.';
+            } elseif (!preg_match('/^[A-Za-z0-9]{16}$/', $ntpn)) {
+                $errors[] = 'NTPN harus 16 karakter alfanumerik.';
             } elseif (Payment::where('ntpn', $ntpn)->exists()) {
                 $errors[] = 'NTPN sudah pernah diimport/dicatat.';
             } elseif (in_array($ntpn, $seenNtpn, true)) {

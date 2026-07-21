@@ -58,7 +58,7 @@
             'icon' => 'bi-file-earmark-plus',
         ] : null,
         $canViewInvoices ? [
-            'label' => 'Menunggu pembayaran',
+            'label' => 'Menunggu Input NTPN',
             'value' => $stats['invoice_menunggu_bayar'],
             'href' => route('invoice.index', ['status' => 'menunggu_pembayaran']),
             'icon' => 'bi-credit-card',

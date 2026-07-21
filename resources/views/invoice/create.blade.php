@@ -7,7 +7,7 @@
             <i class="bi bi-arrow-left"></i> Kembali ke Daftar
         </a>
         <h3 class="text-gray-800">Buat Invoice Tagihan</h3>
-        <p class="text-muted">Buat invoice/tagihan baru berdasarkan Kontrak PKS yang terdaftar di RRI Batam.</p>
+        <p class="text-muted mb-0">Buat invoice/tagihan baru berdasarkan Kontrak PKS yang terdaftar di RRI Batam.</p>
     </div>
 
     @if($errors->any())
@@ -32,31 +32,90 @@
                 || $errors->has('kepala_stasiun_nip');
         @endphp
 
-        <div class="row g-4 align-items-start">
-            <div class="col-lg-7">
-                <div class="card shadow-sm border-0">
-                    <div class="card-body p-4">
-                        <div class="mb-4">
-                            <label for="pks_select" class="form-label fw-semibold">Pilih Kontrak PKS <span class="text-danger">*</span></label>
-                            <select name="pks_id" id="pks_select" class="form-select @error('pks_id') is-invalid @enderror" required>
-                                <option value="">-- Pilih Kontrak --</option>
+        {{-- ====== STEP 1 : Pilih Kontrak PKS ====== --}}
+        <div class="card shadow-sm border-0 mb-4">
+            <div class="card-header bg-white border-bottom py-3 d-flex align-items-center justify-content-between">
+                <div class="d-flex align-items-center gap-2">
+                    <span class="badge bg-primary rounded-circle d-inline-flex align-items-center justify-content-center" style="width:24px;height:24px;font-size:.75rem;">1</span>
+                    <span class="fw-semibold">Pilih Kontrak PKS <span class="text-danger">*</span></span>
+                </div>
+                <div style="max-width: 240px;">
+                    <input type="text" id="pickerSearch" class="form-control form-control-sm" placeholder="Cari kontrak atau klien...">
+                </div>
+            </div>
+            <div class="card-body p-0">
+                @if($pksList->isEmpty())
+                    <div class="text-center text-muted py-5">
+                        <i class="bi bi-inbox fs-1 d-block mb-2"></i>
+                        Tidak ada kontrak PKS yang tersedia untuk pembuatan invoice.
+                    </div>
+                @else
+                    <div class="picker-table-scroll">
+                        <table class="table align-middle mb-0 picker-table">
+                            <thead>
+                                <tr>
+                                    <th style="width:46px;"></th>
+                                    <th>Nomor Kontrak</th>
+                                    <th>Judul PKS</th>
+                                    <th>Nama Klien</th>
+                                    <th class="text-end">Total Kontrak</th>
+                                </tr>
+                            </thead>
+                            <tbody>
                                 @foreach($pksList as $pks)
                                     @php
                                         $tanggalJatuhTempoInvoice = $pks->tanggal_jatuh_tempo_invoice ?? '';
+                                        $isSelected = old('pks_id') == $pks->id || $selectedPksId == $pks->id;
                                     @endphp
-                                    <option value="{{ $pks->id }}"
-                                            data-total="{{ (int) $pks->total }}"
-                                            data-tanggal-jatuh-tempo="{{ $tanggalJatuhTempoInvoice }}"
-                                            data-judul="{{ $pks->judul }}"
-                                            data-client="{{ $pks->client->nama ?? '-' }}"
-                                            {{ (old('pks_id') == $pks->id || $selectedPksId == $pks->id) ? 'selected' : '' }}>
-                                        {{ $pks->nomor }} - {{ $pks->judul }} (Total kontrak: Rp {{ number_format($pks->total, 0, ',', '.') }})
-                                    </option>
+                                    <tr class="picker-row {{ $isSelected ? 'active' : '' }}"
+                                        data-search="{{ strtolower($pks->nomor . ' ' . $pks->judul . ' ' . ($pks->client->nama ?? '')) }}">
+                                        <td class="text-center ps-3">
+                                            <input class="form-check-input picker-radio"
+                                                   type="radio"
+                                                   name="pks_id"
+                                                   id="pks_radio_{{ $pks->id }}"
+                                                   value="{{ $pks->id }}"
+                                                   data-total="{{ (int) $pks->total }}"
+                                                   data-tanggal-jatuh-tempo="{{ $tanggalJatuhTempoInvoice }}"
+                                                   data-judul="{{ $pks->judul }}"
+                                                   data-client="{{ $pks->client->nama ?? '-' }}"
+                                                   {{ $isSelected ? 'checked' : '' }}
+                                                   required>
+                                        </td>
+                                        <td><span class="fw-semibold text-nowrap">{{ $pks->nomor }}</span></td>
+                                        <td><span class="text-break" style="font-size:.85rem;">{{ $pks->judul }}</span></td>
+                                        <td style="font-size:.85rem;">{{ $pks->client->nama ?? '-' }}</td>
+                                        <td class="text-end text-nowrap pe-3">
+                                            <span class="fw-semibold text-primary">Rp {{ number_format($pks->total, 0, ',', '.') }}</span>
+                                        </td>
+                                    </tr>
                                 @endforeach
-                            </select>
-                            <div class="form-text text-muted">Invoice ini akan ditagihkan kepada klien dari PKS terpilih.</div>
-                        </div>
+                            </tbody>
+                        </table>
+                    </div>
+                @endif
+                @error('pks_id')
+                    <div class="px-3 py-2 border-top bg-danger bg-opacity-10">
+                        <small class="text-danger"><i class="bi bi-exclamation-circle me-1"></i>{{ $message }}</small>
+                    </div>
+                @enderror
+            </div>
+            <div class="card-footer bg-white border-top py-2 px-3">
+                <small class="text-muted">Invoice ini akan ditagihkan kepada klien dari PKS terpilih.</small>
+            </div>
+        </div>
 
+        {{-- ====== STEP 2 : Detail Invoice + Ringkasan ====== --}}
+        <div class="row g-4 align-items-start">
+            <div class="col-lg-7">
+                <div class="card shadow-sm border-0">
+                    <div class="card-header bg-white border-bottom py-3">
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="badge bg-primary rounded-circle d-inline-flex align-items-center justify-content-center" style="width:24px;height:24px;font-size:.75rem;">2</span>
+                            <span class="fw-semibold">Detail Invoice</span>
+                        </div>
+                    </div>
+                    <div class="card-body p-4">
                         <div class="row g-3 mb-3">
                             <div class="col-md-6">
                                 <label for="nomor_invoice" class="form-label fw-semibold">Nomor Invoice <span class="text-danger">*</span></label>
@@ -85,14 +144,21 @@
                         <input type="hidden" name="tanggal_jatuh_tempo" id="tanggal_jatuh_tempo" value="{{ old('tanggal_jatuh_tempo') }}">
 
                         <div class="mb-4">
-                            <label for="kode_billing" class="form-label fw-semibold">Kode Billing SIMPONI <span class="text-muted">(Opsional)</span></label>
+                            <label for="kode_billing" class="form-label fw-semibold">Kode Billing SIMPONI</label>
                             <input type="text" 
                                    name="kode_billing" 
                                    id="kode_billing" 
                                    class="form-control @error('kode_billing') is-invalid @enderror" 
                                    value="{{ old('kode_billing') }}" 
-                                   placeholder="Masukkan 15 digit kode billing Simponi jika sudah ada">
-                            <div class="form-text text-muted">Dapat dikosongkan dahulu dan di-input nanti saat proses pembuatan billing selesai.</div>
+                                   placeholder="Masukkan 15 digit kode billing SIMPONI"
+                                   inputmode="numeric"
+                                   pattern="[0-9]{15}"
+                                   maxlength="15"
+                                   oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                            @error('kode_billing')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
+                            <div class="form-text text-muted">Masukkan 15 digit angka kode billing SIMPONI.</div>
                         </div>
 
                         <div class="border rounded mb-4">
@@ -125,8 +191,10 @@
                                                    class="form-control @error('penyetor_nip') is-invalid @enderror"
                                                    value="{{ old('penyetor_nip', $penyetorDefault?->nip) }}"
                                                    inputmode="numeric"
+                                                   pattern="\d{18}"
                                                    maxlength="18"
-                                                   placeholder="18 digit angka">
+                                                   placeholder="18 digit angka"
+                                                   oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                                         </div>
                                     </div>
                                     <div class="row">
@@ -147,8 +215,10 @@
                                                    class="form-control @error('kepala_stasiun_nip') is-invalid @enderror"
                                                    value="{{ old('kepala_stasiun_nip', $kepalaStasiunDefault?->nip) }}"
                                                    inputmode="numeric"
+                                                   pattern="\d{18}"
                                                    maxlength="18"
-                                                   placeholder="18 digit angka">
+                                                   placeholder="18 digit angka"
+                                                   oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                                         </div>
                                     </div>
                                 </div>
@@ -224,9 +294,92 @@
     </form>
 </div>
 
+<style>
+    /* ---- Picker table (shared) ---- */
+    .picker-table-scroll {
+        max-height: 310px;
+        overflow-y: auto;
+        overflow-x: auto;
+    }
+
+    .picker-table {
+        min-width: 700px;
+    }
+
+    .picker-table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: #f8f9fa;
+        font-size: .72rem;
+        text-transform: uppercase;
+        color: #6c757d;
+        font-weight: 700;
+        letter-spacing: .02em;
+        white-space: nowrap;
+        border-bottom: 2px solid #e9ecef;
+        padding: .65rem .75rem;
+    }
+
+    .picker-table tbody td {
+        font-size: .85rem;
+        padding: .6rem .75rem;
+        border-bottom: 1px solid #f1f3f5;
+        vertical-align: middle;
+    }
+
+    .picker-table tbody tr {
+        transition: background-color .12s ease, border-color .12s ease;
+        border-left: 3px solid transparent;
+        cursor: pointer;
+    }
+
+    .picker-table tbody tr:hover {
+        background-color: #f5f8ff;
+    }
+
+    .picker-table tbody tr.active {
+        background-color: #e8f0fe;
+        border-left-color: var(--bs-primary, #0d6efd);
+    }
+
+    .picker-table tbody tr.active td {
+        border-bottom-color: #d0def5;
+    }
+
+    .picker-table .form-check-input {
+        width: 1.1em;
+        height: 1.1em;
+        margin: 0;
+        cursor: pointer;
+    }
+
+    .picker-table .form-check-input:checked {
+        background-color: var(--bs-primary, #0d6efd);
+        border-color: var(--bs-primary, #0d6efd);
+    }
+
+    /* Scrollbar styling */
+    .picker-table-scroll::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+    }
+    .picker-table-scroll::-webkit-scrollbar-track {
+        background: transparent;
+    }
+    .picker-table-scroll::-webkit-scrollbar-thumb {
+        background: #ced4da;
+        border-radius: 3px;
+    }
+    .picker-table-scroll::-webkit-scrollbar-thumb:hover {
+        background: #adb5bd;
+    }
+</style>
+
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        const pksSelect = document.getElementById('pks_select');
+        const radios = document.querySelectorAll('.picker-radio');
+        const rows = document.querySelectorAll('.picker-row');
         const nominalInput = document.getElementById('nominal_input');
         const jatuhTempoInput = document.getElementById('tanggal_jatuh_tempo');
         const jatuhTempoHint = document.getElementById('tanggal_jatuh_tempo_hint');
@@ -243,18 +396,20 @@
             return 'Rp ' + Number(value || 0).toLocaleString('id-ID');
         }
 
-        function selectedPksData() {
-            const option = pksSelect.options[pksSelect.selectedIndex];
+        function clearRowHighlights() {
+            rows.forEach(function (row) {
+                row.classList.remove('active');
+            });
+        }
 
-            if (!option || option.value === '') {
-                return null;
-            }
+        function selectedPksData(radio) {
+            if (!radio) return null;
 
             return {
-                total: Number(option.getAttribute('data-total') || 0),
-                tanggalJatuhTempo: option.getAttribute('data-tanggal-jatuh-tempo') || '',
-                judul: option.getAttribute('data-judul') || '-',
-                client: option.getAttribute('data-client') || '-',
+                total: Number(radio.getAttribute('data-total') || 0),
+                tanggalJatuhTempo: radio.getAttribute('data-tanggal-jatuh-tempo') || '',
+                judul: radio.getAttribute('data-judul') || '-',
+                client: radio.getAttribute('data-client') || '-',
             };
         }
 
@@ -265,8 +420,8 @@
                 : 'Otomatis 20 hari setelah tanggal selesai penyiaran terakhir.';
         }
 
-        function updateContractSummary() {
-            const data = selectedPksData();
+        function updateContractSummary(radio) {
+            var data = selectedPksData(radio);
 
             if (!data) {
                 infoCard.style.display = 'none';
@@ -276,7 +431,7 @@
                 return;
             }
 
-            const nominalInvoiceIni = Number(nominalInput.value || 0);
+            var nominalInvoiceIni = Number(nominalInput.value || 0);
 
             infoJudul.textContent = data.judul;
             infoClient.textContent = data.client;
@@ -290,31 +445,69 @@
             updateJatuhTempo(data);
             infoCard.style.display = 'block';
             emptyState.style.display = 'none';
+
+            clearRowHighlights();
+            radio.closest('tr').classList.add('active');
         }
 
-        function updateInfo() {
-            const data = selectedPksData();
+        function updateInfo(radio) {
+            var data = selectedPksData(radio);
 
             if (data) {
                 nominalInput.value = data.total;
-                updateContractSummary();
+                updateContractSummary(radio);
             } else {
                 infoCard.style.display = 'none';
                 emptyState.style.display = 'block';
             }
         }
 
-        pksSelect.addEventListener('change', function() {
-            const data = selectedPksData();
-            nominalInput.value = data ? data.total : '';
-            updateJatuhTempo(data);
-            updateContractSummary();
+        // Klik baris = pilih radio
+        rows.forEach(function (row) {
+            row.addEventListener('click', function (e) {
+                if (e.target.tagName === 'INPUT') return;
+                var radio = row.querySelector('.picker-radio');
+                radio.checked = true;
+                radio.dispatchEvent(new Event('change'));
+            });
         });
 
-        // Trigger saat halaman load pertama kali (misal jika ada error validation / edit mode)
-        if (pksSelect.value !== '') {
-            updateInfo();
+        radios.forEach(function (radio) {
+            radio.addEventListener('change', function () {
+                var data = selectedPksData(this);
+                nominalInput.value = data ? data.total : '';
+                updateJatuhTempo(data);
+                updateContractSummary(this);
+            });
+        });
+
+        // Trigger saat halaman load pertama kali (misal jika ada error validation / query param)
+        var checkedRadio = document.querySelector('.picker-radio:checked');
+        if (checkedRadio) {
+            updateInfo(checkedRadio);
         }
+
+        // Live search
+        var searchInput = document.getElementById('pickerSearch');
+        if (searchInput) {
+            searchInput.addEventListener('input', function () {
+                var keyword = this.value.toLowerCase().trim();
+                rows.forEach(function (row) {
+                    var text = row.getAttribute('data-search') || '';
+                    row.style.display = text.includes(keyword) ? '' : 'none';
+                });
+            });
+        }
+    });
+</script>
+
+<script>
+    document.getElementById('penyetor_nip').addEventListener('input', function () {
+        this.value = this.value.replace(/\D/g, '').slice(0, 18);
+    });
+
+    document.getElementById('kepala_stasiun_nip').addEventListener('input', function () {
+        this.value = this.value.replace(/\D/g, '').slice(0, 18);
     });
 </script>
 @endsection

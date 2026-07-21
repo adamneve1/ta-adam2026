@@ -21,7 +21,7 @@ public function index(Request $request)
     $statusOptions = [
         'no_invoice' => 'Belum Invoice',
         'belum_billing' => 'Billing Belum Dibuat',
-        'menunggu_pembayaran' => 'Menunggu Pembayaran',
+        'menunggu_pembayaran' => 'Menunggu Input NTPN',
         'overdue' => 'Lewat Tempo',
         'paid' => 'Lunas',
     ];

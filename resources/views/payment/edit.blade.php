@@ -41,7 +41,8 @@
                             </div>
                             <div class="col-md-6">
                                 <label for="ntpn" class="form-label fw-semibold">NTPN <span class="text-danger">*</span></label>
-                                <input type="text" name="ntpn" id="ntpn" class="form-control @error('ntpn') is-invalid @enderror" value="{{ old('ntpn', $payment->ntpn) }}" required>
+                                <input type="text" name="ntpn" id="ntpn" class="form-control @error('ntpn') is-invalid @enderror" value="{{ old('ntpn', $payment->ntpn) }}" required maxlength="16" minlength="16" pattern="[A-Za-z0-9]{16}">
+                                <small class="text-muted">16 karakter alfanumerik (angka dan huruf).</small>
                             </div>
                         </div>
 
@@ -89,8 +90,10 @@
                                                    class="form-control @error('kwitansi_penyetor_nip') is-invalid @enderror"
                                                    value="{{ old('kwitansi_penyetor_nip', $payment->kwitansi_penyetor_nip) }}"
                                                    inputmode="numeric"
+                                                   pattern="\d{18}"
                                                    maxlength="18"
-                                                   placeholder="18 digit angka">
+                                                   placeholder="18 digit angka"
+                                                   oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                                         </div>
                                     </div>
                                     <div class="row">
@@ -110,8 +113,10 @@
                                                    class="form-control @error('kwitansi_kepala_stasiun_nip') is-invalid @enderror"
                                                    value="{{ old('kwitansi_kepala_stasiun_nip', $payment->kwitansi_kepala_stasiun_nip) }}"
                                                    inputmode="numeric"
+                                                   pattern="\d{18}"
                                                    maxlength="18"
-                                                   placeholder="18 digit angka">
+                                                   placeholder="18 digit angka"
+                                                   oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                                         </div>
                                     </div>
                                 </div>
@@ -182,4 +187,18 @@
         </div>
     </form>
 </div>
+
+<script>
+    document.getElementById('ntpn').addEventListener('input', function () {
+        this.value = this.value.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 16);
+    });
+
+    document.getElementById('kwitansi_penyetor_nip').addEventListener('input', function () {
+        this.value = this.value.replace(/\D/g, '').slice(0, 18);
+    });
+
+    document.getElementById('kwitansi_kepala_stasiun_nip').addEventListener('input', function () {
+        this.value = this.value.replace(/\D/g, '').slice(0, 18);
+    });
+</script>
 @endsection

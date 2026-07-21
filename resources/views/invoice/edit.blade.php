@@ -83,13 +83,20 @@
                         <input type="hidden" name="tanggal_jatuh_tempo" id="tanggal_jatuh_tempo" value="{{ old('tanggal_jatuh_tempo', $invoice->tanggal_jatuh_tempo->format('Y-m-d')) }}">
 
                         <div class="mb-4">
-                            <label for="kode_billing" class="form-label fw-semibold">Kode Billing SIMPONI <span class="text-muted">(Opsional)</span></label>
+                            <label for="kode_billing" class="form-label fw-semibold">Kode Billing SIMPONI</label>
                             <input type="text"
                                    name="kode_billing"
                                    id="kode_billing"
                                    class="form-control @error('kode_billing') is-invalid @enderror"
                                    value="{{ old('kode_billing', $invoice->kode_billing) }}"
-                                   placeholder="Masukkan 15 digit kode billing Simponi jika sudah ada">
+                                   placeholder="Masukkan 15 digit kode billing SIMPONI"
+                                   inputmode="numeric"
+                                   pattern="[0-9]{15}"
+                                   maxlength="15"
+                                   oninput="this.value = this.value.replace(/[^0-9]/g, '')">
+                            @error('kode_billing')
+                                <div class="invalid-feedback">{{ $message }}</div>
+                            @enderror
                         </div>
 
                         <div class="border rounded mb-4">
@@ -122,8 +129,10 @@
                                                    class="form-control @error('penyetor_nip') is-invalid @enderror"
                                                    value="{{ old('penyetor_nip', $invoice->penyetor_nip) }}"
                                                    inputmode="numeric"
+                                                   pattern="\d{18}"
                                                    maxlength="18"
-                                                   placeholder="18 digit angka">
+                                                   placeholder="18 digit angka"
+                                                   oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                                         </div>
                                     </div>
                                     <div class="row">
@@ -144,8 +153,10 @@
                                                    class="form-control @error('kepala_stasiun_nip') is-invalid @enderror"
                                                    value="{{ old('kepala_stasiun_nip', $invoice->kepala_stasiun_nip ?: $kepalaStasiunDefault?->nip) }}"
                                                    inputmode="numeric"
+                                                   pattern="\d{18}"
                                                    maxlength="18"
-                                                   placeholder="18 digit angka">
+                                                   placeholder="18 digit angka"
+                                                   oninput="this.value = this.value.replace(/[^0-9]/g, '')">
                                         </div>
                                     </div>
                                 </div>
@@ -311,6 +322,16 @@
         if (pksSelect.value !== '') {
             updateInfo();
         }
+    });
+</script>
+
+<script>
+    document.getElementById('penyetor_nip').addEventListener('input', function () {
+        this.value = this.value.replace(/\D/g, '').slice(0, 18);
+    });
+
+    document.getElementById('kepala_stasiun_nip').addEventListener('input', function () {
+        this.value = this.value.replace(/\D/g, '').slice(0, 18);
     });
 </script>
 @endsection

@@ -83,7 +83,7 @@ class Invoice extends Model
             return 'Lunas';
         }
 
-        return $this->isBelumBilling() ? 'Billing Belum Dibuat' : 'Menunggu Pembayaran';
+        return $this->isBelumBilling() ? 'Billing Belum Dibuat' : 'Menunggu Input NTPN';
     }
 
     public function statusBadgeClass(): string
